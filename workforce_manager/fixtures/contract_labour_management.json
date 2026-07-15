@@ -87,7 +87,7 @@
    "format": "{} Today",
    "icon": "calendar-check",
    "link_to": "Attendance Record",
-   "stats_filter": "[[\"Attendance Record\",\"date\",\"=\",\"Today\"]]",
+   "stats_filter": "",
    "idx": 2
   },
   {
