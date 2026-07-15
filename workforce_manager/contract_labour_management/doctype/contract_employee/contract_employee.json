@@ -24,7 +24,7 @@
  "fields": [
   {
    "fieldname": "naming_series",
-   "fieldtype": "Series",
+   "fieldtype": "Autocomplete",
    "label": "Series",
    "options": "EMP-.YYYY.-.#####",
    "default": "EMP-.YYYY.-.#####"
