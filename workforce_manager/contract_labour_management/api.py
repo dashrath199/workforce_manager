@@ -186,6 +186,22 @@ def get_attendance_percentage():
 
 
 @frappe.whitelist()
+def get_todays_attendance_count():
+	"""Custom Number Card – count today's attendance records."""
+	today_str = today()
+	count = frappe.db.count("Attendance Record", filters={"date": today_str})
+	return {"value": count, "fieldtype": "Int"}
+
+
+@frappe.whitelist()
+def get_outside_geofence_count():
+	"""Custom Number Card – count attendance records outside geofence today."""
+	today_str = today()
+	count = frappe.db.count("Attendance Record", filters={"date": today_str, "geofence_status": "Outside"})
+	return {"value": count, "fieldtype": "Int"}
+
+
+@frappe.whitelist()
 def get_documents_expiring_count():
 	"""Custom Number Card – count documents expiring within 30 days."""
 	today_str = today()
