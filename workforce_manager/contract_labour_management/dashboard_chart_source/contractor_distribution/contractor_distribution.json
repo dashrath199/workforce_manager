@@ -1,0 +1,19 @@
+{
+ "chart_name": "Contractor Distribution",
+ "creation": "2024-01-01 12:00:00.000000",
+ "doctype": "Dashboard Chart Source",
+ "dynamic_filters_json": "{}",
+ "filters_json": "{}",
+ "icon": "building",
+ "idx": 0,
+ "is_public": 1,
+ "is_standard": 1,
+ "modified": "2024-01-01 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Contract Labour Management",
+ "name": "Contractor Distribution",
+ "owner": "Administrator",
+ "source_name": "Contractor Distribution",
+ "timeseries": 0,
+ "timeseries_series": []
+}

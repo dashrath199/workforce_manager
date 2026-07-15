@@ -1,0 +1,64 @@
+{
+ "actions": [],
+ "autoname": "autoincrement",
+ "creation": "2024-01-01 10:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "site",
+  "wage_sheet_ref",
+  "gross_wage",
+  "service_charge",
+  "gst_amount",
+  "line_total"
+ ],
+ "fields": [
+  {
+   "fieldname": "site",
+   "fieldtype": "Link",
+   "label": "Site",
+   "options": "Site",
+   "in_list_view": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "wage_sheet_ref",
+   "fieldtype": "Link",
+   "label": "Wage Sheet Ref",
+   "options": "Wage Sheet",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "gross_wage",
+   "fieldtype": "Currency",
+   "label": "Gross Wage (Base)"
+  },
+  {
+   "fieldname": "service_charge",
+   "fieldtype": "Currency",
+   "label": "Service Charge Amount"
+  },
+  {
+   "fieldname": "gst_amount",
+   "fieldtype": "Currency",
+   "label": "GST Amount"
+  },
+  {
+   "fieldname": "line_total",
+   "fieldtype": "Currency",
+   "label": "Line Total",
+   "in_list_view": 1
+  }
+ ],
+ "is_submittable": 0,
+ "istable": 1,
+ "editable_grid": 0,
+ "links": [],
+ "module": "Contract Labour Management",
+ "name": "Contractor Invoice Item",
+ "naming_rule": "Set by user",
+ "owner": "Administrator",
+ "permissions": [],
+ "modified": "2024-01-01 10:00:00.000000",
+ "modified_by": "Administrator"
+}

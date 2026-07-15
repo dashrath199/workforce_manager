@@ -1,0 +1,125 @@
+{
+ "actions": [],
+ "autoname": "naming_series:",
+ "creation": "2024-01-01 10:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "contractor",
+  "wage_month",
+  "posting_date",
+  "total_wages",
+  "service_charge_percentage",
+  "total_service_charge",
+  "total_gst",
+  "invoice_value",
+  "erpnext_purchase_invoice",
+  "items",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Series",
+   "label": "Series",
+   "options": "CI-.YYYY.-.#####",
+   "default": "CI-.YYYY.-.#####"
+  },
+  {
+   "fieldname": "contractor",
+   "fieldtype": "Link",
+   "label": "Contractor",
+   "options": "Contractor",
+   "reqd": 1
+  },
+  {
+   "fieldname": "wage_month",
+   "fieldtype": "Data",
+   "label": "Wage Month"
+  },
+  {
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "label": "Posting Date"
+  },
+  {
+   "fieldname": "total_wages",
+   "fieldtype": "Currency",
+   "label": "Total Wages",
+   "read_only": 1
+  },
+  {
+   "fieldname": "service_charge_percentage",
+   "fieldtype": "Float",
+   "label": "Service Charge %"
+  },
+  {
+   "fieldname": "total_service_charge",
+   "fieldtype": "Currency",
+   "label": "Total Service Charge",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_gst",
+   "fieldtype": "Currency",
+   "label": "Total GST",
+   "read_only": 1
+  },
+  {
+   "fieldname": "invoice_value",
+   "fieldtype": "Currency",
+   "label": "Invoice Value",
+   "read_only": 1
+  },
+  {
+   "fieldname": "erpnext_purchase_invoice",
+   "fieldtype": "Link",
+   "label": "ERPNext Purchase Invoice",
+   "options": "Purchase Invoice",
+   "read_only": 1
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Invoice Items",
+   "options": "Contractor Invoice Item"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Contractor Invoice",
+   "no_copy": 1,
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "is_submittable": 1,
+ "istable": 0,
+ "editable_grid": 1,
+ "links": [],
+ "module": "Contract Labour Management",
+ "name": "Contractor Invoice",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  }
+ ],
+ "modified": "2024-01-01 10:00:00.000000",
+ "modified_by": "Administrator"
+}

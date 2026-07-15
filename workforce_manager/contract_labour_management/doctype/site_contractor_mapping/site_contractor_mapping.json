@@ -1,0 +1,51 @@
+{
+ "actions": [],
+ "autoname": "autoincrement",
+ "creation": "2024-01-01 10:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "contractor",
+  "deployment_start_date",
+  "deployment_end_date",
+  "status"
+ ],
+ "fields": [
+  {
+   "fieldname": "contractor",
+   "fieldtype": "Link",
+   "label": "Contractor",
+   "options": "Contractor",
+   "in_list_view": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "deployment_start_date",
+   "fieldtype": "Date",
+   "label": "Deployment Start Date"
+  },
+  {
+   "fieldname": "deployment_end_date",
+   "fieldtype": "Date",
+   "label": "Deployment End Date"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Active\nInactive",
+   "default": "Active"
+  }
+ ],
+ "is_submittable": 0,
+ "istable": 1,
+ "editable_grid": 0,
+ "links": [],
+ "module": "Contract Labour Management",
+ "name": "Site Contractor Mapping",
+ "naming_rule": "Set by user",
+ "owner": "Administrator",
+ "permissions": [],
+ "modified": "2024-01-01 10:00:00.000000",
+ "modified_by": "Administrator"
+}

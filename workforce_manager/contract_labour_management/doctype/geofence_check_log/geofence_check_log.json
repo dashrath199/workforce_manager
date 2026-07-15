@@ -1,0 +1,49 @@
+{
+ "actions": [],
+ "autoname": "autoincrement",
+ "creation": "2024-01-01 10:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "log_time",
+  "latitude",
+  "longitude",
+  "status"
+ ],
+ "fields": [
+  {
+   "fieldname": "log_time",
+   "fieldtype": "Datetime",
+   "label": "Log Time",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "latitude",
+   "fieldtype": "Float",
+   "label": "Latitude"
+  },
+  {
+   "fieldname": "longitude",
+   "fieldtype": "Float",
+   "label": "Longitude"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Inside\nOutside",
+   "in_list_view": 1
+  }
+ ],
+ "is_submittable": 0,
+ "istable": 1,
+ "editable_grid": 0,
+ "links": [],
+ "module": "Contract Labour Management",
+ "name": "Geofence Check Log",
+ "naming_rule": "Set by user",
+ "owner": "Administrator",
+ "permissions": [],
+ "modified": "2024-01-01 10:00:00.000000",
+ "modified_by": "Administrator"
+}

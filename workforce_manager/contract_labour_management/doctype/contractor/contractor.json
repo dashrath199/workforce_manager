@@ -1,0 +1,91 @@
+{
+ "actions": [],
+ "autoname": "field:contractor_name",
+ "creation": "2024-01-01 10:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "contractor_name",
+  "vendor_account",
+  "license_no",
+  "pf_registration_no",
+  "esi_registration_no",
+  "pt_registration_no",
+  "lwf_registration_no",
+  "contact",
+  "bank_details"
+ ],
+ "fields": [
+  {
+   "fieldname": "contractor_name",
+   "fieldtype": "Data",
+   "label": "Contractor Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "vendor_account",
+   "fieldtype": "Link",
+   "label": "Vendor/Supplier Account",
+   "options": "Supplier"
+  },
+  {
+   "fieldname": "license_no",
+   "fieldtype": "Data",
+   "label": "License No"
+  },
+  {
+   "fieldname": "pf_registration_no",
+   "fieldtype": "Data",
+   "label": "PF Registration No"
+  },
+  {
+   "fieldname": "esi_registration_no",
+   "fieldtype": "Data",
+   "label": "ESI Registration No"
+  },
+  {
+   "fieldname": "pt_registration_no",
+   "fieldtype": "Data",
+   "label": "PT Registration No"
+  },
+  {
+   "fieldname": "lwf_registration_no",
+   "fieldtype": "Data",
+   "label": "LWF Registration No"
+  },
+  {
+   "fieldname": "contact",
+   "fieldtype": "Link",
+   "label": "Primary Contact",
+   "options": "Contact"
+  },
+  {
+   "fieldname": "bank_details",
+   "fieldtype": "Small Text",
+   "label": "Bank Details"
+  }
+ ],
+ "is_submittable": 0,
+ "links": [],
+ "module": "Contract Labour Management",
+ "name": "Contractor",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "modified": "2024-01-01 10:00:00.000000",
+ "modified_by": "Administrator"
+}

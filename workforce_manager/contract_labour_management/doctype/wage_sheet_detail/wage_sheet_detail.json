@@ -1,0 +1,83 @@
+{
+ "actions": [],
+ "autoname": "autoincrement",
+ "creation": "2024-01-01 10:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "employee",
+  "days_present",
+  "ot_hours",
+  "gross_wage",
+  "pf_deduction",
+  "esi_deduction",
+  "pt_deduction",
+  "lwf_deduction",
+  "net_wage"
+ ],
+ "fields": [
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Employee",
+   "options": "Contract Employee",
+   "in_list_view": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "days_present",
+   "fieldtype": "Float",
+   "label": "Days Present",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "ot_hours",
+   "fieldtype": "Float",
+   "label": "OT Hours"
+  },
+  {
+   "fieldname": "gross_wage",
+   "fieldtype": "Currency",
+   "label": "Gross Wage",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "pf_deduction",
+   "fieldtype": "Currency",
+   "label": "PF Deduction"
+  },
+  {
+   "fieldname": "esi_deduction",
+   "fieldtype": "Currency",
+   "label": "ESI Deduction"
+  },
+  {
+   "fieldname": "pt_deduction",
+   "fieldtype": "Currency",
+   "label": "PT Deduction"
+  },
+  {
+   "fieldname": "lwf_deduction",
+   "fieldtype": "Currency",
+   "label": "LWF Deduction"
+  },
+  {
+   "fieldname": "net_wage",
+   "fieldtype": "Currency",
+   "label": "Net Wage",
+   "in_list_view": 1,
+   "reqd": 1
+  }
+ ],
+ "is_submittable": 0,
+ "istable": 1,
+ "editable_grid": 0,
+ "links": [],
+ "module": "Contract Labour Management",
+ "name": "Wage Sheet Detail",
+ "naming_rule": "Set by user",
+ "owner": "Administrator",
+ "permissions": [],
+ "modified": "2024-01-01 10:00:00.000000",
+ "modified_by": "Administrator"
+}

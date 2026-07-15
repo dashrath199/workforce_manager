@@ -1,0 +1,118 @@
+{
+ "actions": [],
+ "autoname": "naming_series:",
+ "creation": "2024-01-01 10:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "contractor",
+  "wage_month",
+  "pf_challan_number",
+  "esi_challan_number",
+  "pt_challan_number",
+  "lwf_challan_number",
+  "due_date",
+  "payment_date",
+  "total_amount",
+  "status",
+  "attachment"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Series",
+   "label": "Series",
+   "options": "SCR-.YYYY.-.#####",
+   "default": "SCR-.YYYY.-.#####"
+  },
+  {
+   "fieldname": "contractor",
+   "fieldtype": "Link",
+   "label": "Contractor",
+   "options": "Contractor",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "wage_month",
+   "fieldtype": "Data",
+   "label": "Wage Month (e.g., Jan-2024)",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "pf_challan_number",
+   "fieldtype": "Data",
+   "label": "PF Challan Number"
+  },
+  {
+   "fieldname": "esi_challan_number",
+   "fieldtype": "Data",
+   "label": "ESI Challan Number"
+  },
+  {
+   "fieldname": "pt_challan_number",
+   "fieldtype": "Data",
+   "label": "PT Challan Number"
+  },
+  {
+   "fieldname": "lwf_challan_number",
+   "fieldtype": "Data",
+   "label": "LWF Challan Number"
+  },
+  {
+   "fieldname": "due_date",
+   "fieldtype": "Date",
+   "label": "Payment Due Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "payment_date",
+   "fieldtype": "Date",
+   "label": "Actual Payment Date"
+  },
+  {
+   "fieldname": "total_amount",
+   "fieldtype": "Currency",
+   "label": "Total Amount Paid"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Pending\nPaid",
+   "default": "Pending",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "attachment",
+   "fieldtype": "Attach",
+   "label": "Challan/Receipt Attachment"
+  }
+ ],
+ "is_submittable": 0,
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "module": "Contract Labour Management",
+ "name": "Statutory Compliance Record",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "modified": "2024-01-01 10:00:00.000000",
+ "modified_by": "Administrator"
+}

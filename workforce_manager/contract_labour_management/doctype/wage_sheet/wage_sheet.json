@@ -1,0 +1,108 @@
+{
+ "actions": [],
+ "autoname": "naming_series:",
+ "creation": "2024-01-01 10:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "site",
+  "contractor",
+  "wage_month",
+  "total_gross_wages",
+  "total_net_wages",
+  "status",
+  "details",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Series",
+   "label": "Series",
+   "options": "WS-.YYYY.-.#####",
+   "default": "WS-.YYYY.-.#####"
+  },
+  {
+   "fieldname": "site",
+   "fieldtype": "Link",
+   "label": "Site",
+   "options": "Site",
+   "reqd": 1
+  },
+  {
+   "fieldname": "contractor",
+   "fieldtype": "Link",
+   "label": "Contractor",
+   "options": "Contractor",
+   "reqd": 1
+  },
+  {
+   "fieldname": "wage_month",
+   "fieldtype": "Data",
+   "label": "Wage Month (e.g., Jan-2024)",
+   "reqd": 1
+  },
+  {
+   "fieldname": "total_gross_wages",
+   "fieldtype": "Currency",
+   "label": "Total Gross Wages",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_net_wages",
+   "fieldtype": "Currency",
+   "label": "Total Net Wages",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nSubmitted\nCancelled",
+   "default": "Draft"
+  },
+  {
+   "fieldname": "details",
+   "fieldtype": "Table",
+   "label": "Wage Details",
+   "options": "Wage Sheet Detail"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Wage Sheet",
+   "no_copy": 1,
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "is_submittable": 1,
+ "istable": 0,
+ "editable_grid": 1,
+ "links": [],
+ "module": "Contract Labour Management",
+ "name": "Wage Sheet",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  }
+ ],
+ "modified": "2024-01-01 10:00:00.000000",
+ "modified_by": "Administrator"
+}
