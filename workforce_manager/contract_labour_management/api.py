@@ -67,7 +67,11 @@ def _append_geofence_log(attendance, latitude, longitude, status):
 # ---------------------------------------------------------------------------
 
 @frappe.whitelist()
-def mobile_check_in(employee, latitude=None, longitude=None, site=None):
+def mobile_check_in(employee, latitude=None, longitude=None, site=None, face_image=None):
+	"""
+	Mobile check-in with optional face verification photo.
+	face_image should be a base64-encoded image string.
+	"""
 	emp, site_doc = _resolve_employee_and_site(employee, site)
 
 	attendance_date = today()
@@ -87,12 +91,57 @@ def mobile_check_in(employee, latitude=None, longitude=None, site=None):
 		att.shift = emp.shift
 		att.date = attendance_date
 
+	# Handle face image upload
+	if face_image:
+		att.attendance_source = "Mobile App (GPS)"
+
 	status, distance = _geofence_status(site_doc, latitude, longitude)
 	att.check_in_time = now_datetime()
 	att.attendance_source = "Mobile App (GPS)"
 	_append_geofence_log(att, latitude, longitude, status)
 
+	# Save to get a doc name first
 	att.save(ignore_permissions=True)
+
+	# Attach the face image if provided
+	if face_image:
+		from frappe.utils.file_manager import save_file
+		import base64
+		import re
+
+		# Parse base64 data
+		if isinstance(face_image, str) and "," in face_image:
+			header, data = face_image.split(",", 1)
+		else:
+			data = face_image
+			header = "image/jpeg"
+
+		# Extract MIME type from header
+		mime_match = re.match(r"data:([^;]+)", header) if "," in face_image else None
+		mime_type = mime_match.group(1) if mime_match else "image/jpeg"
+		extension = mime_type.split("/")[-1] if "/" in mime_type else "jpg"
+
+		try:
+			raw_data = base64.b64decode(data)
+			file_name = f"checkin_{att.name}_{attendance_date}.{extension}"
+			file_doc = save_file(
+				fname=file_name,
+				content=raw_data,
+				doctype="Attendance Record",
+				 docname=att.name,
+				 is_private=1,
+			)
+			att.db_set("checkin_selfie", file_doc.file_url, commit=True)
+
+			# Run face verification in background
+			frappe.enqueue(
+				"workforce_manager.contract_labour_management.face_utils.verify_face",
+				queue="short",
+				attendance_record=att.name,
+			)
+		except Exception as e:
+			frappe.log_error(f"Face image upload failed: {e}", "Mobile Check-in")
+
 	frappe.db.commit()
 
 	return {
@@ -100,6 +149,7 @@ def mobile_check_in(employee, latitude=None, longitude=None, site=None):
 		"check_in_time": att.check_in_time,
 		"geofence_status": status,
 		"distance_m": round(distance, 1) if distance is not None else None,
+		"face_verification": "Pending" if face_image else "Not Submitted",
 		"message": "Checked in successfully" if status == "Inside" else
 		           "Checked in, but you appear to be outside the site geofence. This has been flagged for review.",
 	}
@@ -312,6 +362,9 @@ def get_workspace_alerts():
 	# 5. Contractor invoices pending approval
 	pending_invoices = frappe.db.count("Contractor Invoice", filters={"docstatus": 0})
 
+	# 6. Face verifications pending today
+	face_pending = frappe.db.count("Attendance Record", filters={"date": today_str, "face_verification_status": "Pending", "checkin_selfie": ["!=", ""]})
+
 	alerts = []
 	for doc in expiring_docs:
 		days_left = (getdate(doc.expiry_date) - getdate(today_str)).days
@@ -361,6 +414,15 @@ def get_workspace_alerts():
 			"route": "/app/contractor-invoice?docstatus=0",
 		})
 
+	if face_pending:
+		alerts.append({
+			"type": "warning",
+			"icon": "user-check",
+			"title": "Face Verifications Pending",
+			"message": f"{face_pending} attendance record(s) need face verification. Please review check-in selfies.",
+			"route": "/app/attendance-record?date=today&face_verification_status=Pending",
+		})
+
 	return {
 		"alerts": alerts,
 		"counts": {
@@ -369,5 +431,6 @@ def get_workspace_alerts():
 			"gps_violations": gps_violations,
 			"wage_sheets_pending": pending_wage_sheets,
 			"invoices_pending": pending_invoices,
+			"face_pending": face_pending,
 		}
 	}

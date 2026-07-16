@@ -15,6 +15,11 @@
   "hours_worked",
   "ot_hours",
   "status",
+  "sb_face",
+  "checkin_selfie",
+  "face_verification_status",
+  "face_verified_by",
+  "face_verified_at",
   "attendance_source",
   "geofence_status",
   "geofence_logs"
@@ -79,6 +84,39 @@
    "label": "Status",
    "options": "Present\nAbsent\nHalf Day\nLeave",
    "default": "Present"
+  },
+  {
+   "fieldname": "sb_face",
+   "fieldtype": "Section Break",
+   "label": "Face Verification"
+  },
+  {
+   "fieldname": "checkin_selfie",
+   "fieldtype": "Attach Image",
+   "label": "Check-in Selfie",
+   "read_only": 1,
+   "description": "Photo captured during mobile check-in for face verification"
+  },
+  {
+   "fieldname": "face_verification_status",
+   "fieldtype": "Select",
+   "label": "Face Verification",
+   "options": "Pending\nVerified\nMismatched\nNo Reference Photo",
+   "default": "Pending",
+   "read_only": 1
+  },
+  {
+   "fieldname": "face_verified_by",
+   "fieldtype": "Link",
+   "label": "Verified By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "face_verified_at",
+   "fieldtype": "Datetime",
+   "label": "Verified At",
+   "read_only": 1
   },
   {
    "fieldname": "attendance_source",

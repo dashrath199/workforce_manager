@@ -16,6 +16,8 @@
   "site",
   "shift",
   "wage_category",
+  "sb_photo",
+  "face_image",
   "sb_kyc",
   "aadhaar_number",
   "aadhaar_verified",
@@ -110,6 +112,17 @@
    "fieldtype": "Link",
    "label": "Wage Category",
    "options": "Wage Category"
+  },
+  {
+   "fieldname": "sb_photo",
+   "fieldtype": "Section Break",
+   "label": "Photo"
+  },
+  {
+   "fieldname": "face_image",
+   "fieldtype": "Attach Image",
+   "label": "Face Photo",
+   "description": "Reference photo for face verification during attendance check-in"
   },
   {
    "fieldname": "sb_kyc",
