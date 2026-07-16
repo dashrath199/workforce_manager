@@ -382,6 +382,7 @@ def worker_submit_leave_request(employee, mobile=None, leave_type=None,
         frappe.throw("All fields are required: leave_type, from_date, to_date, reason")
 
     lr = frappe.new_doc("Leave Request")
+    lr.naming_series = "LR-.YYYY.-.#####"
     lr.employee = employee
     lr.leave_type = leave_type
     lr.from_date = from_date
@@ -416,6 +417,7 @@ def worker_submit_grievance(employee, mobile=None, category=None,
         frappe.throw("All fields are required: category, subject, description")
 
     grv = frappe.new_doc("Grievance")
+    grv.naming_series = "GRV-.YYYY.-.#####"
     grv.employee = employee
     grv.category = category
     grv.subject = subject
