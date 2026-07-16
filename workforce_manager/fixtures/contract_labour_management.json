@@ -292,6 +292,17 @@
    "idx": 19
   },
   {
+   "color": "#FF6B6B",
+   "doc_view": "",
+   "label": "Overtime Settings",
+   "type": "DocType",
+   "format": "Configure",
+   "icon": "settings",
+   "link_to": "Overtime Settings",
+   "stats_filter": "",
+   "idx": 20
+  },
+  {
    "color": "#06B6D4",
    "doc_view": "",
    "label": "Site Contractor Mapping",
