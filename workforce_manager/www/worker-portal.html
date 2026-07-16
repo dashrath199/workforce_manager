@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Worker Portal</title>
+    <script src="/assets/workforce_manager/js/html5-qrcode.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -496,13 +497,10 @@ async function submitEwaRequest() {
 }
 
 // ---------------------------------------------------------------------------
-//  QR Scanner — Uses native BarcodeDetector API (no external library needed)
-//  Works in Chrome for Android and desktop Chrome.
+//  QR Scanner — Uses html5-qrcode library (loaded via <script> tag above)
 // ---------------------------------------------------------------------------
 
-let qrVideoStream = null;
-let qrScanInterval = null;
-qrScannerRunning = false;
+let qrScannerInstance = null;
 
 function startQrScanner() {
     const readerEl = document.getElementById('qr-reader');
@@ -510,9 +508,9 @@ function startQrScanner() {
     const startBtn = document.getElementById('qr-start-btn');
     const stopBtn = document.getElementById('qr-stop-btn');
 
-    // Check if BarcodeDetector is supported
-    if (typeof BarcodeDetector === 'undefined') {
-        resultEl.innerHTML = '<p style="color:#EF4444;">⚠️ QR scanner requires Chrome on Android or desktop. Please use the Chrome browser.</p>';
+    // Check if library loaded
+    if (typeof Html5Qrcode === 'undefined') {
+        resultEl.innerHTML = '<p style="color:#EF4444;">⚠️ QR scanner library not loaded. Refresh and try again.</p>';
         return;
     }
 
@@ -520,70 +518,38 @@ function startQrScanner() {
     startBtn.style.display = 'none';
     stopBtn.classList.remove('hidden');
 
-    // Access the camera
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-    .then(function(stream) {
-        qrVideoStream = stream;
+    qrScannerInstance = new Html5Qrcode("qr-reader");
 
-        // Create video element
-        var video = document.createElement('video');
-        video.setAttribute('autoplay', '');
-        video.setAttribute('playsinline', '');
-        video.srcObject = stream;
-        video.style.width = '100%';
-        video.style.maxWidth = '400px';
-        video.style.borderRadius = '8px';
-        readerEl.innerHTML = '';
-        readerEl.appendChild(video);
-
-        resultEl.innerHTML = '<p style="color:#888;">📷 Scanning... Point camera at site QR code.</p>';
-        qrScannerRunning = true;
-
-        // Create barcode detector
-        var detector = new BarcodeDetector({ formats: ['qr_code'] });
-
-        // Scan frames every 500ms
-        var canvas = document.createElement('canvas');
-        qrScanInterval = setInterval(function() {
-            if (!qrScannerRunning || !video.videoWidth) return;
-
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            var ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0);
-
-            detector.detect(canvas)
-            .then(function(barcodes) {
-                if (barcodes.length > 0) {
-                    var qrData = barcodes[0].rawValue;
-                    if (qrData && qrData.trim().startsWith('SITE-')) {
-                        handleQrScan(qrData.trim());
-                    }
-                }
-            })
-            .catch(function(err) {
-                // Silently continue scanning
-            });
-        }, 500);
-    })
-    .catch(function(err) {
+    qrScannerInstance.start(
+        { facingMode: "environment" },
+        {
+            fps: 10,
+            qrbox: { width: 250, height: 250 },
+        },
+        function(qrData) {
+            if (qrData && qrData.trim().startsWith('SITE-')) {
+                handleQrScan(qrData.trim());
+            }
+        },
+        function(err) {
+            // Scanning in progress - silently continue
+        }
+    ).catch(function(err) {
         resultEl.innerHTML = '<p style="color:#EF4444;">❌ Camera access denied. Please allow camera access in your browser settings.</p>';
         startBtn.style.display = 'block';
         stopBtn.classList.add('hidden');
+        qrScannerInstance = null;
     });
 }
 
 function stopQrScanner() {
-    qrScannerRunning = false;
-
-    if (qrScanInterval) {
-        clearInterval(qrScanInterval);
-        qrScanInterval = null;
-    }
-
-    if (qrVideoStream) {
-        qrVideoStream.getTracks().forEach(function(track) { track.stop(); });
-        qrVideoStream = null;
+    if (qrScannerInstance) {
+        try {
+            qrScannerInstance.stop().then(function() {
+                qrScannerInstance.clear();
+            }).catch(function() {});
+        } catch(e) {}
+        qrScannerInstance = null;
     }
 
     document.getElementById('qr-reader').innerHTML = '';
