@@ -812,26 +812,6 @@ def regenerate_site_qr_code(site):
 
 
 # ---------------------------------------------------------------------------
-#  Static asset serving (for Worker Portal QR scanner)
-# ---------------------------------------------------------------------------
-
-
-@frappe.whitelist(allow_guest=True)
-def get_qr_scanner_js():
-    """Serve the html5-qrcode.min.js library content.
-    Used by Worker Portal to load the QR scanner when static assets aren't accessible.
-    """
-    import os
-    js_path = frappe.get_app_path("workforce_manager", "public", "js", "html5-qrcode.min.js")
-    if not os.path.exists(js_path):
-        frappe.throw("QR scanner library not found. Please reinstall the app.")
-    with open(js_path, "r") as f:
-        content = f.read()
-    frappe.response["content_type"] = "application/javascript"
-    return content
-
-
-# ---------------------------------------------------------------------------
 #  Workspace Dashboard – Chart data (for custom Dashboard Chart Sources)
 # ---------------------------------------------------------------------------
 
