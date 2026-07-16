@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Worker Portal</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+               background: #f0f2f5; color: #333; padding-bottom: 80px; }
+        .header { background: linear-gradient(135deg, #4F46E5, #7C3AED);
+                  color: #fff; padding: 20px 16px; text-align: center; }
+        .header h1 { font-size: 20px; margin-bottom: 4px; }
+        .header p { font-size: 13px; opacity: 0.9; }
+        .container { max-width: 600px; margin: 0 auto; padding: 12px; }
+        .card { background: #fff; border-radius: 12px; padding: 16px;
+                margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .card h3 { font-size: 14px; color: #666; margin-bottom: 12px;
+                    border-bottom: 1px solid #eee; padding-bottom: 8px; }
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+        .stat { text-align: center; padding: 12px 8px; background: #f8f9ff;
+                 border-radius: 8px; }
+        .stat .num { font-size: 22px; font-weight: bold; color: #4F46E5; }
+        .stat .label { font-size: 11px; color: #888; margin-top: 2px; }
+        .btn { display: inline-block; padding: 10px 20px; border-radius: 8px;
+                border: none; font-size: 14px; cursor: pointer; text-align: center;
+                text-decoration: none; width: 100%; margin-bottom: 8px; }
+        .btn-primary { background: #4F46E5; color: #fff; }
+        .btn-success { background: #10B981; color: #fff; }
+        .btn-warning { background: #F59E0B; color: #fff; }
+        .btn-outline { background: #fff; color: #4F46E5; border: 1px solid #4F46E5; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 13px; color: #666; margin-bottom: 4px; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 10px 12px; border: 1px solid #ddd;
+            border-radius: 8px; font-size: 14px; font-family: inherit; }
+        .form-group textarea { min-height: 80px; }
+        .tab-bar { display: flex; background: #fff; border-top: 1px solid #ddd;
+                    position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; }
+        .tab { flex: 1; text-align: center; padding: 8px 4px; font-size: 11px;
+                color: #888; cursor: pointer; text-decoration: none; }
+        .tab.active { color: #4F46E5; font-weight: bold; }
+        .tab svg { display: block; margin: 0 auto 2px; width: 22px; height: 22px; }
+        .hidden { display: none !important; }
+        .table { width: 100%; font-size: 12px; border-collapse: collapse; }
+        .table th { text-align: left; color: #888; font-weight: 600;
+                     padding: 6px 4px; border-bottom: 1px solid #eee; }
+        .table td { padding: 8px 4px; border-bottom: 1px solid #f5f5f5; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 10px;
+                   font-size: 11px; font-weight: 600; }
+        .badge-green { background: #d1fae5; color: #065f46; }
+        .badge-yellow { background: #fef3c7; color: #92400e; }
+        .badge-red { background: #fee2e2; color: #991b1b; }
+        .badge-gray { background: #f3f4f6; color: #6b7280; }
+        .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+                  background: #10B981; color: #fff; padding: 12px 24px;
+                  border-radius: 8px; font-size: 14px; z-index: 1000;
+                  box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: none; }
+        .toast.error { background: #EF4444; }
+        .login-screen { text-align: center; padding: 40px 20px; }
+        .login-screen h2 { margin-bottom: 24px; color: #4F46E5; }
+        .loading { text-align: center; padding: 40px; color: #888; }
+    </style>
+</head>
+<body>
+
+<div id="toast" class="toast"></div>
+
+<!-- Login Screen -->
+<div id="login-screen" class="login-screen">
+    <div style="max-width: 320px; margin: 60px auto;">
+        <h2>👷 Worker Portal</h2>
+        <p style="color:#888; margin-bottom:24px; font-size:14px;">
+            Enter your Employee ID and registered mobile number
+        </p>
+        <div class="form-group">
+            <label>Employee ID</label>
+            <input type="text" id="login-employee" placeholder="EMP-2026-00001" />
+        </div>
+        <div class="form-group">
+            <label>Mobile Number</label>
+            <input type="tel" id="login-mobile" placeholder="9999999999" maxlength="10" />
+        </div>
+        <button class="btn btn-primary" onclick="login()">Login</button>
+        <p style="margin-top:16px; font-size:12px; color:#aaa;">
+            Use your Employee ID and the mobile number registered with your employer.
+        </p>
+    </div>
+</div>
+
+<!-- Dashboard -->
+<div id="dashboard" class="hidden">
+    <div class="header">
+        <h1 id="greeting">Welcome</h1>
+        <p id="emp-details"></p>
+    </div>
+
+    <div class="container">
+        <div id="loading-indicator" class="loading">Loading your data...</div>
+
+        <div id="section-stats" class="card hidden">
+            <h3>📊 This Month</h3>
+            <div class="stat-grid">
+                <div class="stat">
+                    <div class="num" id="stat-present">-</div>
+                    <div class="label">Present</div>
+                </div>
+                <div class="stat">
+                    <div class="num" id="stat-absent">-</div>
+                    <div class="label">Absent</div>
+                </div>
+                <div class="stat">
+                    <div class="num" id="stat-ot">-</div>
+                    <div class="label">OT Hours</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="section-attendance" class="card hidden">
+            <h3>📋 Recent Attendance</h3>
+            <div id="attendance-list"></div>
+        </div>
+
+        <div id="section-wages" class="card hidden">
+            <h3>💰 Wage History</h3>
+            <div id="wage-list"></div>
+        </div>
+
+        <div id="section-leave" class="card hidden">
+            <h3>📅 Leave Requests</h3>
+            <div id="leave-list"></div>
+            <button class="btn btn-outline" onclick="showLeaveForm()" style="margin-top:8px;">
+                + New Leave Request
+            </button>
+            <div id="leave-form" class="hidden" style="margin-top:12px;">
+                <div class="form-group">
+                    <label>Leave Type</label>
+                    <select id="leave-type">
+                        <option>Casual Leave</option>
+                        <option>Sick Leave</option>
+                        <option>Earned Leave</option>
+                        <option>Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>From Date</label>
+                    <input type="date" id="leave-from" />
+                </div>
+                <div class="form-group">
+                    <label>To Date</label>
+                    <input type="date" id="leave-to" />
+                </div>
+                <div class="form-group">
+                    <label>Reason</label>
+                    <textarea id="leave-reason"></textarea>
+                </div>
+                <div class="form-group">
+                    <button class="btn btn-success" onclick="submitLeave()">Submit Request</button>
+                    <button class="btn btn-outline" onclick="document.getElementById('leave-form').classList.add('hidden')">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="section-grievance" class="card hidden">
+            <h3>🚨 Grievances</h3>
+            <div id="grievance-list"></div>
+            <button class="btn btn-outline" onclick="showGrievanceForm()" style="margin-top:8px;">
+                + New Complaint
+            </button>
+            <div id="grievance-form" class="hidden" style="margin-top:12px;">
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="grievance-category">
+                        <option>Wage Issue</option>
+                        <option>Attendance Issue</option>
+                        <option>Safety Concern</option>
+                        <option>Harassment</option>
+                        <option>Document Issue</option>
+                        <option>Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Subject</label>
+                    <input type="text" id="grievance-subject" />
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="grievance-desc"></textarea>
+                </div>
+                <div class="form-group">
+                    <button class="btn btn-warning" onclick="submitGrievance()">Submit Complaint</button>
+                    <button class="btn btn-outline" onclick="document.getElementById('grievance-form').classList.add('hidden')">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Tab Bar -->
+    <div class="tab-bar">
+        <a class="tab active" onclick="switchTab('dashboard')" id="tab-dashboard">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+            </svg>
+            Home
+        </a>
+        <a class="tab" onclick="switchTab('wages')" id="tab-wages">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/><path d="M12 6v12M8 10h8"/>
+            </svg>
+            Wages
+        </a>
+        <a class="tab" onclick="switchTab('leave')" id="tab-leave">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
+            </svg>
+            Leave
+        </a>
+        <a class="tab" onclick="switchTab('grievance')" id="tab-grievance">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            Report
+        </a>
+    </div>
+</div>
+
+<script>
+let employee = "";
+let mobile = "";
+
+function toast(msg, isError) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast' + (isError ? ' error' : '');
+    t.style.display = 'block';
+    setTimeout(() => t.style.display = 'none', 3000);
+}
+
+function login() {
+    employee = document.getElementById('login-employee').value.trim();
+    mobile = document.getElementById('login-mobile').value.trim();
+    if (!employee || !mobile) { toast('Please enter Employee ID and Mobile', true); return; }
+    loadDashboard();
+}
+
+async function api(method, args) {
+    args = args || {};
+    args.employee = employee;
+    args.mobile = mobile;
+    const params = new URLSearchParams();
+    for (const [k, v] of Object.entries(args)) {
+        params.append(k, v);
+    }
+    try {
+        const r = await fetch('/api/method/' + method, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: params,
+        });
+        const data = await r.json();
+        if (data.exception) { throw new Error(data.exception); }
+        return data.message;
+    } catch (e) {
+        toast('Error: ' + e.message, true);
+        return null;
+    }
+}
+
+async function loadDashboard() {
+    document.getElementById('loading-indicator').classList.remove('hidden');
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('dashboard').classList.remove('hidden');
+
+    const profile = await api('workforce_manager.contract_labour_management.api.worker_get_profile');
+    if (!profile) { document.getElementById('loading-indicator').textContent = 'Login failed. Check your Employee ID and Mobile number.'; return; }
+    document.getElementById('loading-indicator').classList.add('hidden');
+
+    document.getElementById('greeting').textContent = 'Hello, ' + profile.employee_name + '!';
+    document.getElementById('emp-details').textContent = profile.site + ' | ' + profile.contractor;
+
+    // Show sections
+    document.getElementById('section-stats').classList.remove('hidden');
+    document.getElementById('section-attendance').classList.remove('hidden');
+
+    await Promise.all([
+        loadAttendance(),
+        loadWages(),
+        loadLeaves(),
+        loadGrievances(),
+    ]);
+}
+
+async function loadAttendance() {
+    const data = await api('workforce_manager.contract_labour_management.api.worker_get_attendance', { limit: 30 });
+    if (!data) return;
+
+    const present = data.filter(d => d.status === 'Present').length;
+    const absent = data.filter(d => d.status === 'Absent').length;
+    const ot = data.reduce((s, d) => s + (d.ot_hours || 0), 0);
+
+    document.getElementById('stat-present').textContent = present;
+    document.getElementById('stat-absent').textContent = absent;
+    document.getElementById('stat-ot').textContent = ot.toFixed(1);
+
+    let html = '<table class="table"><tr><th>Date</th><th>Status</th><th>In</th><th>Out</th></tr>';
+    data.slice(0, 20).forEach(d => {
+        const badge = d.status === 'Present' ? 'badge-green' : d.status === 'Absent' ? 'badge-red' : 'badge-yellow';
+        html += `<tr><td>${d.date}</td><td><span class="badge ${badge}">${d.status}</span></td>
+                 <td>${d.check_in_time ? d.check_in_time.slice(11,16) : '-'}</td>
+                 <td>${d.check_out_time ? d.check_out_time.slice(11,16) : '-'}</td></tr>`;
+    });
+    document.getElementById('attendance-list').innerHTML = html;
+}
+
+async function loadWages() {
+    const data = await api('workforce_manager.contract_labour_management.api.worker_get_wage_slips', { limit: 12 });
+    if (!data) return;
+    if (data.length === 0) { document.getElementById('wage-list').innerHTML = '<p style="color:#888;">No wage records yet.</p>'; return; }
+    let html = '<table class="table"><tr><th>Month</th><th>Days</th><th>Gross</th><th>Net</th></tr>';
+    data.forEach(d => {
+        html += `<tr><td>${d.month}</td><td>${d.days_present}</td>
+                 <td>₹${d.gross_wage}</td><td><strong>₹${d.net_wage}</strong></td></tr>`;
+    });
+    document.getElementById('wage-list').innerHTML = html;
+}
+
+async function loadLeaves() {
+    const data = await api('workforce_manager.contract_labour_management.api.worker_get_leave_requests', { limit: 20 });
+    if (!data) return;
+    if (data.length === 0) { document.getElementById('leave-list').innerHTML = '<p style="color:#888;">No leave requests.</p>'; return; }
+    let html = '<table class="table"><tr><th>Type</th><th>Dates</th><th>Days</th><th>Status</th></tr>';
+    data.forEach(d => {
+        const badge = d.status === 'Approved' ? 'badge-green' : d.status === 'Rejected' ? 'badge-red' : 'badge-yellow';
+        html += `<tr><td>${d.leave_type}</td><td>${d.from_date} - ${d.to_date}</td>
+                 <td>${d.total_days}</td><td><span class="badge ${badge}">${d.status}</span></td></tr>`;
+    });
+    document.getElementById('leave-list').innerHTML = html;
+}
+
+async function loadGrievances() {
+    const data = await api('workforce_manager.contract_labour_management.api.worker_get_grievances', { limit: 20 });
+    if (!data) return;
+    if (data.length === 0) { document.getElementById('grievance-list').innerHTML = '<p style="color:#888;">No complaints filed.</p>'; return; }
+    let html = '<table class="table"><tr><th>Subject</th><th>Category</th><th>Status</th></tr>';
+    data.forEach(d => {
+        const badge = d.status === 'Resolved' || d.status === 'Closed' ? 'badge-green' : 
+                      d.status === 'In Progress' ? 'badge-yellow' : 'badge-gray';
+        html += `<tr><td>${d.subject}</td><td>${d.category}</td>
+                 <td><span class="badge ${badge}">${d.status}</span></td></tr>`;
+    });
+    document.getElementById('grievance-list').innerHTML = html;
+}
+
+function switchTab(tab) {
+    document.querySelectorAll('#section-stats, #section-attendance, #section-wages, #section-leave, #section-grievance')
+        .forEach(el => el.classList.add('hidden'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+
+    if (tab === 'dashboard') {
+        document.getElementById('section-stats').classList.remove('hidden');
+        document.getElementById('section-attendance').classList.remove('hidden');
+    } else if (tab === 'wages') {
+        document.getElementById('section-wages').classList.remove('hidden');
+    } else if (tab === 'leave') {
+        document.getElementById('section-leave').classList.remove('hidden');
+    } else if (tab === 'grievance') {
+        document.getElementById('section-grievance').classList.remove('hidden');
+    }
+
+    document.getElementById('tab-' + tab).classList.add('active');
+}
+
+function showLeaveForm() { document.getElementById('leave-form').classList.toggle('hidden'); }
+function showGrievanceForm() { document.getElementById('grievance-form').classList.toggle('hidden'); }
+
+async function submitLeave() {
+    const leave_type = document.getElementById('leave-type').value;
+    const from_date = document.getElementById('leave-from').value;
+    const to_date = document.getElementById('leave-to').value;
+    const reason = document.getElementById('leave-reason').value;
+    if (!from_date || !to_date || !reason) { toast('Please fill all fields', true); return; }
+    const result = await api('workforce_manager.contract_labour_management.api.worker_submit_leave_request', {
+        leave_type, from_date, to_date, reason,
+    });
+    if (result) {
+        toast('Leave request submitted!');
+        document.getElementById('leave-form').classList.add('hidden');
+        document.getElementById('leave-from').value = '';
+        document.getElementById('leave-to').value = '';
+        document.getElementById('leave-reason').value = '';
+        loadLeaves();
+    }
+}
+
+async function submitGrievance() {
+    const category = document.getElementById('grievance-category').value;
+    const subject = document.getElementById('grievance-subject').value;
+    const description = document.getElementById('grievance-desc').value;
+    if (!subject || !description) { toast('Please fill all fields', true); return; }
+    const result = await api('workforce_manager.contract_labour_management.api.worker_submit_grievance', {
+        category, subject, description,
+    });
+    if (result) {
+        toast('Complaint submitted!');
+        document.getElementById('grievance-form').classList.add('hidden');
+        document.getElementById('grievance-subject').value = '';
+        document.getElementById('grievance-desc').value = '';
+        loadGrievances();
+    }
+}
+</script>
+</body>
+</html>
