@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Worker Portal</title>
+    <script src="/assets/workforce_manager/js/html5-qrcode.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -202,6 +203,30 @@
             </div>
         </div>
 
+        <!-- QR Scan Tab -->
+        <div id="section-qr" class="hidden">
+            <div class="card">
+                <h3>📸 Scan Site QR Code</h3>
+                <p style="font-size:13px; color:#666; margin-bottom:12px;">
+                    Point your camera at the site's QR code to check in.
+                </p>
+                <div id="qr-reader" style="width:100%; max-width:400px; margin:0 auto;"></div>
+                <div id="qr-result" style="text-align:center; margin-top:12px;"></div>
+                <button id="qr-start-btn" class="btn btn-primary" onclick="startQrScanner()" style="display:none;">
+                    📷 Start Scanner
+                </button>
+                <button id="qr-stop-btn" class="btn btn-outline hidden" onclick="stopQrScanner()">
+                    Stop Scanner
+                </button>
+            </div>
+            <div class="card">
+                <h3>📋 Today's QR Check-ins</h3>
+                <div id="qr-checkins-list">
+                    <p style="color:#888; font-size:13px;">No QR check-ins today.</p>
+                </div>
+            </div>
+        </div>
+
         <!-- Grievance Tab -->
         <div id="section-grievance" class="card hidden">
             <h3>🚨 Grievances</h3>
@@ -263,6 +288,13 @@
             </svg>
             Leave
         </a>
+        <a class="tab" onclick="switchTab('qr')" id="tab-qr">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+            </svg>
+            QR Scan
+        </a>
         <a class="tab" onclick="switchTab('grievance')" id="tab-grievance">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
@@ -276,6 +308,8 @@
 <script>
 let employee = "";
 let mobile = "";
+let html5QrCode = null;
+let qrScannerRunning = false;
 
 function toast(msg, isError) {
     const t = document.getElementById('toast');
@@ -337,6 +371,7 @@ async function loadDashboard() {
         loadLeaves(),
         loadEwa(),
         loadGrievances(),
+        loadQrCheckins(),
     ]);
 }
 
@@ -462,6 +497,113 @@ async function submitEwaRequest() {
     }
 }
 
+// ---------------------------------------------------------------------------
+//  QR Scanner
+// ---------------------------------------------------------------------------
+
+function startQrScanner() {
+    const readerEl = document.getElementById('qr-reader');
+    const resultEl = document.getElementById('qr-result');
+    const startBtn = document.getElementById('qr-start-btn');
+    const stopBtn = document.getElementById('qr-stop-btn');
+
+    if (typeof Html5Qrcode === 'undefined') {
+        resultEl.innerHTML = '<p style="color:#EF4444;">QR scanner library not loaded. Please check internet connection.</p>';
+        return;
+    }
+
+    resultEl.innerHTML = '<p style="color:#888;">📷 Scanning... Point camera at site QR code.</p>';
+    startBtn.style.display = 'none';
+    stopBtn.classList.remove('hidden');
+
+    html5QrCode = new Html5Qrcode("qr-reader");
+
+    html5QrCode.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        function(qrCodeMessage) {
+            // On QR code detected
+            handleQrScan(qrCodeMessage);
+        },
+        function(errorMessage) {
+            // Ignore non-errors
+        }
+    ).catch(function(err) {
+        resultEl.innerHTML = '<p style="color:#EF4444;">Camera access denied or not available: ' + err + '</p>';
+        startBtn.style.display = 'block';
+        stopBtn.classList.add('hidden');
+    });
+
+    qrScannerRunning = true;
+}
+
+function stopQrScanner() {
+    if (html5QrCode) {
+        html5QrCode.stop().then(function() {
+            html5QrCode.clear();
+            document.getElementById('qr-reader').innerHTML = '';
+        }).catch(function(err) {});
+    }
+    document.getElementById('qr-start-btn').style.display = 'block';
+    document.getElementById('qr-stop-btn').classList.add('hidden');
+    document.getElementById('qr-result').innerHTML = '';
+    qrScannerRunning = false;
+}
+
+async function handleQrScan(qrCodeData) {
+    // The QR code contains the site's qr_code_id string
+    const qrCodeId = qrCodeData.trim();
+
+    if (!qrCodeId.startsWith('SITE-')) {
+        document.getElementById('qr-result').innerHTML =
+            '<p style="color:#EF4444;">❌ Invalid QR code. Please scan a valid site QR code.</p>';
+        return;
+    }
+
+    // Stop scanner temporarily while processing
+    stopQrScanner();
+
+    document.getElementById('qr-result').innerHTML =
+        '<p style="color:#4F46E5;">⏳ Checking in...</p>';
+
+    const result = await api('workforce_manager.contract_labour_management.api.qr_check_in', {
+        qr_code_id: qrCodeId,
+    });
+
+    if (result) {
+        if (result.already_checked_in) {
+            document.getElementById('qr-result').innerHTML =
+                `<p style="color:#F59E0B;">✅ Already checked in today at ${result.check_in_time.slice(11,16)}.</p>`;
+        } else {
+            document.getElementById('qr-result').innerHTML =
+                `<p style="color:#10B981;">✅ Check-in successful at ${result.check_in_time.slice(11,16)}!</p>`;
+        }
+        loadQrCheckins();
+    } else {
+        document.getElementById('qr-result').innerHTML =
+            '<p style="color:#EF4444;">❌ Check-in failed. Please try again or contact HR.</p>';
+        // Re-enable scanner on failure
+        document.getElementById('qr-start-btn').style.display = 'block';
+    }
+}
+
+async function loadQrCheckins() {
+    const data = await api('workforce_manager.contract_labour_management.api.worker_get_attendance', { limit: 10 });
+    if (!data) return;
+    const qrCheckins = data.filter(d => d.attendance_source === 'QR Code Scan');
+    const list = document.getElementById('qr-checkins-list');
+    if (qrCheckins.length === 0) {
+        list.innerHTML = '<p style="color:#888; font-size:13px;">No QR check-ins today.</p>';
+        return;
+    }
+    let html = '<table class="table"><tr><th>Date</th><th>Time</th><th>Status</th></tr>';
+    qrCheckins.slice(0, 10).forEach(d => {
+        html += `<tr><td>${d.date}</td><td>${d.check_in_time ? d.check_in_time.slice(11,16) : '-'}</td>
+                 <td><span class="badge badge-green">${d.status}</span></td></tr>`;
+    });
+    list.innerHTML = html;
+}
+
 async function loadGrievances() {
     const data = await api('workforce_manager.contract_labour_management.api.worker_get_grievances', { limit: 20 });
     if (!data) return;
@@ -478,7 +620,7 @@ async function loadGrievances() {
 
 function switchTab(tab) {
     const sections = ['#section-stats', '#section-attendance', '#section-wages',
-                      '#section-leave', '#section-ewa', '#section-grievance'];
+                      '#section-leave', '#section-ewa', '#section-qr', '#section-grievance'];
     document.querySelectorAll(sections.join(', ')).forEach(el => el.classList.add('hidden'));
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
 
@@ -491,6 +633,9 @@ function switchTab(tab) {
         document.getElementById('section-ewa').classList.remove('hidden');
     } else if (tab === 'leave') {
         document.getElementById('section-leave').classList.remove('hidden');
+    } else if (tab === 'qr') {
+        document.getElementById('section-qr').classList.remove('hidden');
+        loadQrCheckins();
     } else if (tab === 'grievance') {
         document.getElementById('section-grievance').classList.remove('hidden');
     }
