@@ -9,7 +9,10 @@
   "start_time",
   "end_time",
   "grace_period",
-  "break_duration"
+  "break_duration",
+  "sb_ot_settings",
+  "is_night_shift",
+  "ot_rate_multiplier"
  ],
  "fields": [
   {
@@ -40,6 +43,24 @@
    "fieldname": "break_duration",
    "fieldtype": "Int",
    "label": "Break Duration (Mins)"
+  },
+  {
+   "fieldname": "sb_ot_settings",
+   "fieldtype": "Section Break",
+   "label": "Overtime Settings"
+  },
+  {
+   "fieldname": "is_night_shift",
+   "fieldtype": "Check",
+   "label": "Night Shift",
+   "default": 0,
+   "description": "If checked, OT for this shift uses Night Shift OT rate"
+  },
+  {
+   "fieldname": "ot_rate_multiplier",
+   "fieldtype": "Float",
+   "label": "OT Rate Multiplier (Override)",
+   "description": "Leave blank to use default from Overtime Settings"
   }
  ],
  "is_submittable": 0,

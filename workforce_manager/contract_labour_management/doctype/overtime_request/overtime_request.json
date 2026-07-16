@@ -1,0 +1,252 @@
+{
+ "actions": [],
+ "autoname": "naming_series:",
+ "creation": "2024-01-01 10:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "employee",
+  "employee_name",
+  "site",
+  "contractor",
+  "column_break_1",
+  "date",
+  "attendance_record",
+  "ot_category",
+  "reason_for_ot",
+  "sb_hours",
+  "requested_hours",
+  "approved_hours",
+  "column_break_hours",
+  "ot_rate_multiplier",
+  "ot_amount",
+  "sb_approval",
+  "status",
+  "approved_by",
+  "approval_date",
+  "column_break_approval",
+  "supervisor_approved_by",
+  "supervisor_approved_date",
+  "sb_remarks",
+  "remarks",
+  "hr_remarks"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "OT-.YYYY.-.#####",
+   "default": "OT-.YYYY.-.#####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Employee",
+   "options": "Contract Employee",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "label": "Employee Name",
+   "fetch_from": "employee.first_name",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "site",
+   "fieldtype": "Link",
+   "label": "Site",
+   "options": "Site",
+   "fetch_from": "employee.site",
+   "read_only": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "contractor",
+   "fieldtype": "Link",
+   "label": "Contractor",
+   "options": "Contractor",
+   "fetch_from": "employee.contractor",
+   "read_only": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "OT Date",
+   "reqd": 1,
+   "in_list_view": 1,
+   "default": "Today"
+  },
+  {
+   "fieldname": "attendance_record",
+   "fieldtype": "Link",
+   "label": "Attendance Record",
+   "options": "Attendance Record",
+   "description": "Link to the Attendance Record for this date (auto-filled)"
+  },
+  {
+   "fieldname": "ot_category",
+   "fieldtype": "Select",
+   "label": "OT Category",
+   "options": "Regular\nHoliday\nNight Shift",
+   "default": "Regular",
+   "reqd": 1
+  },
+  {
+   "fieldname": "reason_for_ot",
+   "fieldtype": "Small Text",
+   "label": "Reason for OT",
+   "description": "Why is overtime needed?"
+  },
+  {
+   "fieldname": "sb_hours",
+   "fieldtype": "Section Break",
+   "label": "Hours & Amount"
+  },
+  {
+   "fieldname": "requested_hours",
+   "fieldtype": "Float",
+   "label": "Requested Hours",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "approved_hours",
+   "fieldtype": "Float",
+   "label": "Approved Hours",
+   "description": "HR can adjust approved hours (defaults to requested hours)"
+  },
+  {
+   "fieldname": "column_break_hours",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "ot_rate_multiplier",
+   "fieldtype": "Float",
+   "label": "OT Rate Multiplier",
+   "read_only": 1,
+   "description": "Rate multiplier based on OT category (from Overtime Settings)"
+  },
+  {
+   "fieldname": "ot_amount",
+   "fieldtype": "Currency",
+   "label": "OT Amount (Estimated)",
+   "read_only": 1,
+   "description": "Estimated OT amount = approved_hours × hourly_rate × multiplier"
+  },
+  {
+   "fieldname": "sb_approval",
+   "fieldtype": "Section Break",
+   "label": "Approval"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nPending Supervisor\nSubmitted\nApproved\nRejected\nCancelled",
+   "default": "Draft",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Approved By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approval_date",
+   "fieldtype": "Datetime",
+   "label": "Approval Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_approval",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "supervisor_approved_by",
+   "fieldtype": "Link",
+   "label": "Supervisor Approved By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "supervisor_approved_date",
+   "fieldtype": "Datetime",
+   "label": "Supervisor Approved Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_remarks",
+   "fieldtype": "Section Break",
+   "label": "Remarks"
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Worker Remarks"
+  },
+  {
+   "fieldname": "hr_remarks",
+   "fieldtype": "Small Text",
+   "label": "HR Remarks"
+  }
+ ],
+ "is_submittable": 0,
+ "istable": 0,
+ "links": [],
+ "module": "Contract Labour Management",
+ "name": "Overtime Request",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Site Supervisor",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "modified": "2024-01-01 10:00:00.000000",
+ "modified_by": "Administrator"
+}

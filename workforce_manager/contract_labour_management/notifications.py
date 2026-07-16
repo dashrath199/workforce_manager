@@ -31,6 +31,49 @@ def send_expiry_alerts():
 	_alert_expiring_documents()
 	_alert_overdue_statutory_compliance()
 	_alert_expiring_contractor_licenses()
+	_alert_pending_ot_approvals()
+
+
+def _alert_pending_ot_approvals():
+	"""Alert HR Managers about pending overtime requests."""
+	rows = frappe.get_all(
+		"Overtime Request",
+		filters={"status": ["in", ["Submitted", "Pending Supervisor"]]},
+		fields=["name", "employee", "employee_name", "date", "requested_hours", "status"],
+		order_by="creation asc",
+	)
+
+	pending_count = len(rows)
+	if not pending_count:
+		return
+
+	# Group by status
+	submitted = [r for r in rows if r.status == "Submitted"]
+	pending_sup = [r for r in rows if r.status == "Pending Supervisor"]
+
+	if submitted:
+		_notify_hr_managers(
+			subject=f"OT Approvals Needed: {len(submitted)} request(s) pending HR approval",
+			message=(
+				f"{len(submitted)} overtime request(s) are pending HR approval.\n"
+				+ "\n".join(f"- {r.employee_name} ({r.employee}): {r.requested_hours}h on {r.date}" for r in submitted[:5])
+				+ (f"\n... and {len(submitted)-5} more" if len(submitted) > 5 else "")
+			),
+			document_type="Overtime Request",
+			document_name=submitted[0].name,
+		)
+
+	if pending_sup:
+		_notify_hr_managers(
+			subject=f"OT Pending Supervisor: {len(pending_sup)} request(s) awaiting supervisor approval",
+			message=(
+				f"{len(pending_sup)} overtime request(s) are awaiting site supervisor approval.\n"
+				+ "\n".join(f"- {r.employee_name} ({r.employee}): {r.requested_hours}h on {r.date}" for r in pending_sup[:5])
+				+ (f"\n... and {len(pending_sup)-5} more" if len(pending_sup) > 5 else "")
+			),
+			document_type="Overtime Request",
+			document_name=pending_sup[0].name,
+		)
 
 
 def _alert_expiring_documents():

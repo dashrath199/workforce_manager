@@ -512,6 +512,175 @@ def worker_get_ewa_history(employee, mobile=None, limit=20):
 
 
 # ---------------------------------------------------------------------------
+#  OT — Overtime Request endpoints (Worker Portal)
+# ---------------------------------------------------------------------------
+
+
+@frappe.whitelist(allow_guest=True)
+def worker_check_ot_eligibility(employee, mobile=None, date=None):
+    """Check if employee can request OT on a given date."""
+    _auth_worker(employee, mobile)
+    from frappe.utils import today as frappe_today
+
+    from workforce_manager.contract_labour_management.doctype.overtime_settings.overtime_settings import (
+        get_overtime_settings, validate_ot_hours
+    )
+
+    ot_date = date or frappe_today()
+    settings = get_overtime_settings()
+
+    # Get today's attendance
+    att = frappe.db.get_value(
+        "Attendance Record",
+        {"employee": employee, "date": ot_date},
+        ["name", "check_in_time", "check_out_time", "hours_worked", "ot_hours"],
+        as_dict=True,
+    )
+
+    if not att:
+        return {
+            "eligible": False,
+            "reason": "No attendance record found for this date. Please check in first.",
+            "can_request": 0,
+        }
+
+    if not att.check_out_time:
+        return {
+            "eligible": False,
+            "reason": "You haven't checked out yet. OT can only be calculated after check-out.",
+            "can_request": 0,
+        }
+
+    # Check if OT hours already recorded
+    ot_available = flt(att.ot_hours) if att.ot_hours else 0
+    if ot_available <= 0:
+        return {
+            "eligible": False,
+            "reason": "No overtime hours calculated for today's attendance.",
+            "can_request": 0,
+            "attendance_record": att.name,
+            "hours_worked": att.hours_worked,
+        }
+
+    # Check if OT request already exists
+    existing = frappe.db.get_value(
+        "Overtime Request",
+        {"employee": employee, "date": ot_date, "status": ["in", ["Submitted", "Approved", "Pending Supervisor"]]},
+        "name",
+    )
+    if existing:
+        return {
+            "eligible": False,
+            "reason": f"An active Overtime Request ({existing}) already exists for today.",
+            "can_request": 0,
+            "existing_request": existing,
+        }
+
+    # Validate against limits
+    validation = validate_ot_hours(employee, ot_date, ot_available, settings)
+    if not validation.get("valid"):
+        return {
+            "eligible": False,
+            "reason": validation.get("reason"),
+            "can_request": 0,
+            "daily_used": validation.get("daily_used"),
+            "weekly_used": validation.get("weekly_used"),
+        }
+
+    return {
+        "eligible": True,
+        "reason": "",
+        "can_request": ot_available,
+        "attendance_record": att.name,
+        "hours_worked": att.hours_worked,
+        "ot_hours_available": ot_available,
+        "require_approval": settings.require_approval,
+        "auto_approve_up_to": settings.auto_approve_up_to_hours,
+    }
+
+
+@frappe.whitelist(allow_guest=True)
+def worker_submit_overtime_request(employee, mobile=None, date=None,
+                                    requested_hours=None, ot_category=None,
+                                    reason_for_ot=None, attendance_record=None):
+    """Submit an overtime request from the worker portal."""
+    _auth_worker(employee, mobile)
+    from frappe.utils import today as frappe_today
+
+    ot_date = date or frappe_today()
+
+    if not requested_hours or flt(requested_hours) <= 0:
+        frappe.throw("Please enter valid OT hours.")
+
+    if not ot_category:
+        ot_category = "Regular"
+
+    # Resolve attendance record if not provided
+    if not attendance_record:
+        attendance_record = frappe.db.get_value(
+            "Attendance Record",
+            {"employee": employee, "date": ot_date},
+            "name",
+        )
+
+    ot = frappe.new_doc("Overtime Request")
+    ot.naming_series = "OT-.YYYY.-.#####"
+    ot.employee = employee
+    ot.date = ot_date
+    ot.attendance_record = attendance_record
+    ot.ot_category = ot_category
+    ot.requested_hours = flt(requested_hours)
+    ot.reason_for_ot = reason_for_ot
+    ot.remarks = reason_for_ot
+
+    # Determine initial status
+    from workforce_manager.contract_labour_management.doctype.overtime_settings.overtime_settings import (
+        get_overtime_settings
+    )
+    settings = get_overtime_settings()
+
+    if not settings.require_approval:
+        ot.status = "Approved"
+        ot.approved_by = "System (Auto-Approved)"
+        ot.approval_date = now()
+    elif settings.require_supervisor_approval:
+        ot.status = "Pending Supervisor"
+    else:
+        ot.status = "Submitted"
+
+    ot.save(ignore_permissions=True)
+    frappe.db.commit()
+
+    return {
+        "name": ot.name,
+        "status": ot.status,
+        "requested_hours": ot.requested_hours,
+        "approved_hours": ot.approved_hours,
+        "message": (
+            "OT request submitted and auto-approved!" if ot.status == "Approved"
+            else "OT request submitted for supervisor approval." if ot.status == "Pending Supervisor"
+            else "OT request submitted for HR approval."
+        ),
+    }
+
+
+@frappe.whitelist(allow_guest=True)
+def worker_get_overtime_requests(employee, mobile=None, limit=20):
+    """Return overtime requests for a worker."""
+    _auth_worker(employee, mobile)
+    records = frappe.get_all(
+        "Overtime Request",
+        filters={"employee": employee},
+        fields=["name", "date", "ot_category", "requested_hours",
+                "approved_hours", "status", "reason_for_ot",
+                "hr_remarks", "creation"],
+        order_by="creation desc",
+        limit_page_length=limit,
+    )
+    return records
+
+
+# ---------------------------------------------------------------------------
 #  Workspace Dashboard – Chart data (for custom Dashboard Chart Sources)
 # ---------------------------------------------------------------------------
 
@@ -656,6 +825,17 @@ def get_workspace_alerts():
 			"route": "/app/attendance-record?date=today&face_verification_status=Pending",
 		})
 
+	# 7. Pending OT approvals
+	pending_ot = frappe.db.count("Overtime Request", filters={"status": ["in", ["Submitted", "Pending Supervisor"]]})
+	if pending_ot:
+		alerts.append({
+			"type": "info",
+			"icon": "clock",
+			"title": "OT Approvals Pending",
+			"message": f"{pending_ot} overtime request(s) pending approval",
+			"route": "/app/overtime-request?status=Submitted,Approved",
+		})
+
 	return {
 		"alerts": alerts,
 		"counts": {
@@ -665,5 +845,6 @@ def get_workspace_alerts():
 			"wage_sheets_pending": pending_wage_sheets,
 			"invoices_pending": pending_invoices,
 			"face_pending": face_pending,
+			"ot_approvals_pending": pending_ot,
 		}
 	}
