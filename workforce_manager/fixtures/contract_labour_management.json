@@ -210,7 +210,7 @@
    "type": "Report",
    "format": "Cost Report",
    "icon": "trending-up",
-   "link_to": "Vendor-wise Wage & Invoice MIS",
+   "link_to": "Vendor-wise Wage and Invoice MIS",
    "stats_filter": "",
    "idx": 13
   },
@@ -232,7 +232,7 @@
    "type": "Report",
    "format": "Reports",
    "icon": "file",
-   "link_to": "Vendor-wise Wage & Invoice MIS",
+   "link_to": "Vendor-wise Wage and Invoice MIS",
    "stats_filter": "",
    "idx": 15
   },

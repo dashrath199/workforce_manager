@@ -1,4 +1,4 @@
-frappe.query_reports["Vendor-wise Wage & Invoice MIS"] = {
+frappe.query_reports["Vendor-wise Wage and Invoice MIS"] = {
 	"filters": [
 		{
 			"fieldname": "contractor",

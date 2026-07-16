@@ -11,11 +11,11 @@
  "modified": "2024-01-01 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Contract Labour Management",
- "name": "Vendor-wise Wage & Invoice MIS",
+ "name": "Vendor-wise Wage and Invoice MIS",
  "owner": "Administrator",
  "prepared_report": 0,
  "ref_doctype": "Contractor Invoice",
- "report_name": "Vendor-wise Wage & Invoice MIS",
+ "report_name": "Vendor-wise Wage and Invoice MIS",
  "report_type": "Script Report",
  "roles": [
   {
