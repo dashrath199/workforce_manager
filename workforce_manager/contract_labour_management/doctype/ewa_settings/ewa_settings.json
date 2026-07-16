@@ -1,0 +1,113 @@
+{
+ "actions": [],
+ "autoname": "field:title",
+ "creation": "2024-01-01 10:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "title",
+  "sb_general",
+  "max_advance_percentage",
+  "min_days_worked",
+  "cooldown_days",
+  "max_advance_amount",
+  "sb_restrictions",
+  "require_approval",
+  "require_bank_details",
+  "require_kyc"
+ ],
+ "fields": [
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title",
+   "reqd": 1,
+   "unique": 1,
+   "default": "EWA Settings"
+  },
+  {
+   "fieldname": "sb_general",
+   "fieldtype": "Section Break",
+   "label": "General Settings"
+  },
+  {
+   "fieldname": "max_advance_percentage",
+   "fieldtype": "Percent",
+   "label": "Max Advance (% of Earned)",
+   "default": 60,
+   "description": "Maximum percentage of earned wages a worker can withdraw early"
+  },
+  {
+   "fieldname": "min_days_worked",
+   "fieldtype": "Int",
+   "label": "Min Days Worked",
+   "default": 10,
+   "description": "Minimum days a worker must have attended in the current month to be eligible"
+  },
+  {
+   "fieldname": "cooldown_days",
+   "fieldtype": "Int",
+   "label": "Cooldown (Days)",
+   "default": 15,
+   "description": "Minimum gap in days between successive EWA requests"
+  },
+  {
+   "fieldname": "max_advance_amount",
+   "fieldtype": "Currency",
+   "label": "Max Advance Amount",
+   "default": 5000,
+   "description": "Absolute cap on any single EWA request"
+  },
+  {
+   "fieldname": "sb_restrictions",
+   "fieldtype": "Section Break",
+   "label": "Eligibility Restrictions"
+  },
+  {
+   "fieldname": "require_approval",
+   "fieldtype": "Check",
+   "label": "Require HR Approval",
+   "default": 1,
+   "description": "If unchecked, requests are auto-approved"
+  },
+  {
+   "fieldname": "require_bank_details",
+   "fieldtype": "Check",
+   "label": "Require Bank Details",
+   "default": 1,
+   "description": "Worker must have bank account and IFSC on file"
+  },
+  {
+   "fieldname": "require_kyc",
+   "fieldtype": "Check",
+   "label": "Require KYC Completed",
+   "default": 1,
+   "description": "Worker must have Aadhaar and PAN verified"
+  }
+ ],
+ "is_submittable": 0,
+ "istable": 0,
+ "links": [],
+ "module": "Contract Labour Management",
+ "name": "EWA Settings",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "modified": "2024-01-01 10:00:00.000000",
+ "modified_by": "Administrator"
+}

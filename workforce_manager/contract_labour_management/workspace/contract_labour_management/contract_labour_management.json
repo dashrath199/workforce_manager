@@ -237,6 +237,17 @@
    "idx": 15
   },
   {
+   "color": "#059669",
+   "doc_view": "",
+   "label": "EWA Requests",
+   "type": "DocType",
+   "format": "{} Pending",
+   "icon": "dollar-sign",
+   "link_to": "EWA Request",
+   "stats_filter": "[[\"EWA Request\",\"status\",\"=\",\"Submitted\"]]",
+   "idx": 16
+  },
+  {
    "color": "#4F46E5",
    "doc_view": "",
    "label": "Site",
@@ -245,7 +256,7 @@
    "icon": "building",
    "link_to": "Site",
    "stats_filter": "[]",
-   "idx": 16
+   "idx": 17
   },
   {
    "color": "#10B981",

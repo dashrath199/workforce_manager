@@ -1,0 +1,218 @@
+{
+ "actions": [],
+ "autoname": "naming_series:",
+ "creation": "2024-01-01 10:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "employee",
+  "employee_name",
+  "site",
+  "contractor",
+  "column_break_1",
+  "date",
+  "status",
+  "total_days_attended",
+  "daily_wage_rate",
+  "sb_amounts",
+  "earned_amount",
+  "max_eligible_amount",
+  "column_break_amounts",
+  "requested_amount",
+  "disbursed_amount",
+  "sb_approval",
+  "approved_by",
+  "approved_date",
+  "column_break_approval",
+  "disbursed_by",
+  "disbursed_date",
+  "sb_details",
+  "remarks",
+  "hr_remarks"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "EWA-.YYYY.-.#####",
+   "default": "EWA-.YYYY.-.#####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Employee",
+   "options": "Contract Employee",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee_name",
+   "fieldtype": "Read Only",
+   "label": "Employee Name",
+   "fetch_from": "employee.first_name"
+  },
+  {
+   "fieldname": "site",
+   "fieldtype": "Read Only",
+   "label": "Site",
+   "fetch_from": "employee.site"
+  },
+  {
+   "fieldname": "contractor",
+   "fieldtype": "Read Only",
+   "label": "Contractor",
+   "fetch_from": "employee.contractor"
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Request Date",
+   "default": "Today",
+   "reqd": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nSubmitted\nApproved\nRejected\nDisbursed\nDeducted",
+   "default": "Draft",
+   "reqd": 1
+  },
+  {
+   "fieldname": "total_days_attended",
+   "fieldtype": "Float",
+   "label": "Total Days Attended (Month)"
+  },
+  {
+   "fieldname": "daily_wage_rate",
+   "fieldtype": "Currency",
+   "label": "Daily Wage Rate"
+  },
+  {
+   "fieldname": "sb_amounts",
+   "fieldtype": "Section Break",
+   "label": "Amounts"
+  },
+  {
+   "fieldname": "earned_amount",
+   "fieldtype": "Currency",
+   "label": "Earned Amount (Month)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "max_eligible_amount",
+   "fieldtype": "Currency",
+   "label": "Max Eligible Amount",
+   "read_only": 1,
+   "description": "Calculated as earned_amount × max_advance_percentage"
+  },
+  {
+   "fieldname": "column_break_amounts",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "requested_amount",
+   "fieldtype": "Currency",
+   "label": "Requested Amount",
+   "reqd": 1
+  },
+  {
+   "fieldname": "disbursed_amount",
+   "fieldtype": "Currency",
+   "label": "Disbursed Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_approval",
+   "fieldtype": "Section Break",
+   "label": "Approval"
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Approved By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_date",
+   "fieldtype": "Datetime",
+   "label": "Approved Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_approval",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "disbursed_by",
+   "fieldtype": "Link",
+   "label": "Disbursed By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "disbursed_date",
+   "fieldtype": "Datetime",
+   "label": "Disbursed Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_details",
+   "fieldtype": "Section Break",
+   "label": "Remarks"
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Worker Remarks"
+  },
+  {
+   "fieldname": "hr_remarks",
+   "fieldtype": "Small Text",
+   "label": "HR Remarks"
+  }
+ ],
+ "is_submittable": 0,
+ "istable": 0,
+ "links": [],
+ "module": "Contract Labour Management",
+ "name": "EWA Request",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "modified": "2024-01-01 10:00:00.000000",
+ "modified_by": "Administrator"
+}

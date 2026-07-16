@@ -282,11 +282,26 @@ def get_documents_expiring_count():
 
 def _auth_worker(employee, mobile):
     """Simple auth: verify employee exists and mobile matches."""
-    emp = frappe.get_doc("Contract Employee", employee)
+    try:
+        emp = frappe.get_doc("Contract Employee", employee)
+    except frappe.DoesNotExistError:
+        frappe.throw(f"Authentication failed: Employee '{employee}' not found. Check your Employee ID.")
+
     digits = "".join(ch for ch in (mobile or "") if ch.isdigit())
     emp_mobile = "".join(ch for ch in (emp.mobile_number or "") if ch.isdigit())
-    if not emp_mobile or digits != emp_mobile:
-        frappe.throw("Authentication failed: Mobile number does not match.")
+
+    if not emp_mobile:
+        frappe.throw(
+            f"Authentication failed: No mobile number registered for Employee "
+            f"'{employee}'. Please contact your HR manager to update your profile."
+        )
+
+    if digits != emp_mobile:
+        frappe.throw(
+            f"Authentication failed: Mobile number does not match the registered "
+            f"number for Employee '{employee}'. Please check your mobile number "
+            f"or contact HR to update your records."
+        )
     return emp
 
 
@@ -419,6 +434,77 @@ def worker_get_grievances(employee, mobile=None, limit=20):
         filters={"employee": employee},
         fields=["name", "category", "subject", "description",
                 "status", "resolution_notes", "creation"],
+        order_by="creation desc",
+        limit_page_length=limit,
+    )
+    return records
+
+
+# ---------------------------------------------------------------------------
+#  EWA — Earned Wage Access endpoints
+# ---------------------------------------------------------------------------
+
+
+@frappe.whitelist(allow_guest=True)
+def worker_get_ewa_eligibility(employee, mobile=None):
+    """Check EWA eligibility and return eligible amount."""
+    _auth_worker(employee, mobile)
+    from workforce_manager.contract_labour_management.doctype.ewa_settings.ewa_settings import ewa_check_eligibility
+    return ewa_check_eligibility(employee)
+
+
+@frappe.whitelist(allow_guest=True)
+def worker_submit_ewa_request(employee, mobile=None, requested_amount=None, remarks=None):
+    """Submit an EWA request from the worker portal."""
+    _auth_worker(employee, mobile)
+    from workforce_manager.contract_labour_management.doctype.ewa_settings.ewa_settings import ewa_check_eligibility
+    from workforce_manager.contract_labour_management.doctype.ewa_settings.ewa_settings import get_ewa_settings
+
+    eligibility = ewa_check_eligibility(employee)
+    if not eligibility.get("eligible"):
+        frappe.throw(eligibility.get("reason", "Not eligible for EWA at this time."))
+
+    if not requested_amount or flt(requested_amount) <= 0:
+        frappe.throw("Please enter a valid amount.")
+
+    requested = flt(requested_amount)
+    if requested > eligibility["can_request_now"]:
+        frappe.throw(
+            f"Requested amount ₹{requested:,.2f} exceeds your eligible amount "
+            f"₹{eligibility['can_request_now']:,.2f}."
+        )
+
+    ewa = frappe.new_doc("EWA Request")
+    ewa.naming_series = "EWA-.YYYY.-.#####"
+    ewa.employee = employee
+    ewa.date = today()
+    ewa.status = "Submitted" if get_ewa_settings().require_approval else "Approved"
+    ewa.total_days_attended = eligibility["days_attended"]
+    ewa.daily_wage_rate = eligibility["daily_wage_rate"]
+    ewa.earned_amount = eligibility["earned_amount"]
+    ewa.max_eligible_amount = eligibility["can_request_now"]
+    ewa.requested_amount = requested
+    ewa.remarks = remarks
+    ewa.save(ignore_permissions=True)
+    frappe.db.commit()
+
+    return {
+        "name": ewa.name,
+        "status": ewa.status,
+        "requested_amount": ewa.requested_amount,
+        "message": "EWA request submitted successfully!" if ewa.status == "Submitted" else "EWA request auto-approved!",
+    }
+
+
+@frappe.whitelist(allow_guest=True)
+def worker_get_ewa_history(employee, mobile=None, limit=20):
+    """Return EWA request history for a worker."""
+    _auth_worker(employee, mobile)
+    records = frappe.get_all(
+        "EWA Request",
+        filters={"employee": employee},
+        fields=["name", "date", "requested_amount", "disbursed_amount",
+                "status", "remarks", "hr_remarks", "creation"],
         order_by="creation desc",
         limit_page_length=limit,
     )

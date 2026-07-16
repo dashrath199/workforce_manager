@@ -22,6 +22,14 @@
                  border-radius: 8px; }
         .stat .num { font-size: 22px; font-weight: bold; color: #4F46E5; }
         .stat .label { font-size: 11px; color: #888; margin-top: 2px; }
+        .ewa-eligible { background: linear-gradient(135deg, #10B981, #059669);
+                         color: #fff; border-radius: 12px; padding: 16px;
+                         margin-bottom: 12px; text-align: center; }
+        .ewa-eligible .big { font-size: 28px; font-weight: bold; }
+        .ewa-eligible .sm { font-size: 12px; opacity: 0.9; }
+        .ewa-ineligible { background: #fef3c7; border: 1px solid #f59e0b;
+                           border-radius: 12px; padding: 16px; margin-bottom: 12px;
+                           font-size: 13px; color: #92400e; text-align: center; }
         .btn { display: inline-block; padding: 10px 20px; border-radius: 8px;
                 border: none; font-size: 14px; cursor: pointer; text-align: center;
                 text-decoration: none; width: 100%; margin-bottom: 8px; }
@@ -52,6 +60,7 @@
         .badge-yellow { background: #fef3c7; color: #92400e; }
         .badge-red { background: #fee2e2; color: #991b1b; }
         .badge-gray { background: #f3f4f6; color: #6b7280; }
+        .badge-blue { background: #dbeafe; color: #1e40af; }
         .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
                   background: #10B981; color: #fff; padding: 12px 24px;
                   border-radius: 8px; font-size: 14px; z-index: 1000;
@@ -98,6 +107,7 @@
     <div class="container">
         <div id="loading-indicator" class="loading">Loading your data...</div>
 
+        <!-- Home Tab Sections -->
         <div id="section-stats" class="card hidden">
             <h3>📊 This Month</h3>
             <div class="stat-grid">
@@ -121,11 +131,13 @@
             <div id="attendance-list"></div>
         </div>
 
+        <!-- Wages Tab -->
         <div id="section-wages" class="card hidden">
             <h3>💰 Wage History</h3>
             <div id="wage-list"></div>
         </div>
 
+        <!-- Leave Tab -->
         <div id="section-leave" class="card hidden">
             <h3>📅 Leave Requests</h3>
             <div id="leave-list"></div>
@@ -161,6 +173,36 @@
             </div>
         </div>
 
+        <!-- EWA Tab -->
+        <div id="section-ewa" class="hidden">
+            <div id="ewa-eligibility-container"></div>
+            <div class="card">
+                <h3>💰 Request Early Wage Access</h3>
+                <div id="ewa-request-form" class="hidden">
+                    <div class="form-group">
+                        <label>Amount (₹)</label>
+                        <input type="number" id="ewa-amount" min="100" step="100" placeholder="Enter amount" />
+                    </div>
+                    <div class="form-group">
+                        <label>Remarks (optional)</label>
+                        <textarea id="ewa-remarks" placeholder="Why do you need early wage access?"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <button class="btn btn-success" onclick="submitEwaRequest()">Submit Request</button>
+                        <button class="btn btn-outline" onclick="document.getElementById('ewa-request-form').classList.add('hidden')">Cancel</button>
+                    </div>
+                </div>
+                <button id="ewa-request-btn" class="btn btn-success hidden" onclick="showEwaForm()">
+                    + Request Early Wage Access
+                </button>
+            </div>
+            <div class="card">
+                <h3>📋 EWA History</h3>
+                <div id="ewa-list"></div>
+            </div>
+        </div>
+
+        <!-- Grievance Tab -->
         <div id="section-grievance" class="card hidden">
             <h3>🚨 Grievances</h3>
             <div id="grievance-list"></div>
@@ -208,6 +250,12 @@
                 <circle cx="12" cy="12" r="10"/><path d="M12 6v12M8 10h8"/>
             </svg>
             Wages
+        </a>
+        <a class="tab" onclick="switchTab('ewa')" id="tab-ewa">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
+            </svg>
+            EWA
         </a>
         <a class="tab" onclick="switchTab('leave')" id="tab-leave">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -287,6 +335,7 @@ async function loadDashboard() {
         loadAttendance(),
         loadWages(),
         loadLeaves(),
+        loadEwa(),
         loadGrievances(),
     ]);
 }
@@ -338,6 +387,81 @@ async function loadLeaves() {
     document.getElementById('leave-list').innerHTML = html;
 }
 
+async function loadEwa() {
+    const btn = document.getElementById('ewa-request-btn');
+    const form = document.getElementById('ewa-request-form');
+    form.classList.add('hidden');
+    btn.classList.add('hidden');
+
+    const eligibility = await api('workforce_manager.contract_labour_management.api.worker_get_ewa_eligibility');
+    const container = document.getElementById('ewa-eligibility-container');
+
+    if (!eligibility) {
+        container.innerHTML = '<div class="card"><p style="color:#888;">Could not check EWA eligibility.</p></div>';
+        return;
+    }
+
+    if (eligibility.eligible) {
+        container.innerHTML = `
+            <div class="ewa-eligible">
+                <div class="sm">You can withdraw up to</div>
+                <div class="big">₹${eligibility.can_request_now.toLocaleString('en-IN')}</div>
+                <div class="sm">Based on ${eligibility.days_attended} day(s) attended @ ₹${eligibility.daily_wage_rate}/day</div>
+            </div>
+            <div class="card" style="font-size:13px;">
+                <table style="width:100%;">
+                    <tr><td style="color:#888;">Daily Wage Rate</td><td style="text-align:right;">₹${eligibility.daily_wage_rate}</td></tr>
+                    <tr><td style="color:#888;">Days Attended (This Month)</td><td style="text-align:right;">${eligibility.days_attended}</td></tr>
+                    <tr><td style="color:#888;">Earned Amount</td><td style="text-align:right;">₹${eligibility.earned_amount.toLocaleString('en-IN')}</td></tr>
+                    <tr><td style="color:#888;">Already Requested</td><td style="text-align:right;">₹${eligibility.already_requested.toLocaleString('en-IN')}</td></tr>
+                    <tr><td style="color:#888; border-top:1px solid #ddd; padding-top:4px;"><strong>Can Request Now</strong></td>
+                        <td style="text-align:right; border-top:1px solid #ddd; padding-top:4px;"><strong>₹${eligibility.can_request_now.toLocaleString('en-IN')}</strong></td></tr>
+                </table>
+            </div>`;
+        btn.classList.remove('hidden');
+    } else {
+        container.innerHTML = `
+            <div class="ewa-ineligible">
+                <strong>⛔ Not Eligible</strong><br>
+                ${eligibility.reason || 'You are not eligible for early wage access at this time.'}
+            </div>`;
+    }
+
+    // Load history
+    const history = await api('workforce_manager.contract_labour_management.api.worker_get_ewa_history', { limit: 20 });
+    const list = document.getElementById('ewa-list');
+    if (!history || history.length === 0) {
+        list.innerHTML = '<p style="color:#888;">No EWA requests yet.</p>';
+        return;
+    }
+    let html = '<table class="table"><tr><th>Date</th><th>Amount</th><th>Status</th></tr>';
+    history.forEach(d => {
+        const badge = d.status === 'Disbursed' || d.status === 'Deducted' ? 'badge-green' :
+                      d.status === 'Approved' ? 'badge-blue' :
+                      d.status === 'Rejected' ? 'badge-red' : 'badge-yellow';
+        const amount = d.disbursed_amount != null && d.disbursed_amount > 0 ? d.disbursed_amount : d.requested_amount;
+        html += `<tr><td>${d.date}</td><td>₹${amount.toLocaleString('en-IN')}</td>
+                 <td><span class="badge ${badge}">${d.status}</span></td></tr>`;
+    });
+    list.innerHTML = html;
+}
+
+async function submitEwaRequest() {
+    const amount = document.getElementById('ewa-amount').value;
+    const remarks = document.getElementById('ewa-remarks').value;
+    if (!amount || amount <= 0) { toast('Please enter a valid amount', true); return; }
+    const result = await api('workforce_manager.contract_labour_management.api.worker_submit_ewa_request', {
+        requested_amount: amount, remarks,
+    });
+    if (result) {
+        toast(result.message);
+        document.getElementById('ewa-request-form').classList.add('hidden');
+        document.getElementById('ewa-amount').value = '';
+        document.getElementById('ewa-remarks').value = '';
+        loadEwa();
+    }
+}
+
 async function loadGrievances() {
     const data = await api('workforce_manager.contract_labour_management.api.worker_get_grievances', { limit: 20 });
     if (!data) return;
@@ -353,8 +477,9 @@ async function loadGrievances() {
 }
 
 function switchTab(tab) {
-    document.querySelectorAll('#section-stats, #section-attendance, #section-wages, #section-leave, #section-grievance')
-        .forEach(el => el.classList.add('hidden'));
+    const sections = ['#section-stats', '#section-attendance', '#section-wages',
+                      '#section-leave', '#section-ewa', '#section-grievance'];
+    document.querySelectorAll(sections.join(', ')).forEach(el => el.classList.add('hidden'));
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
 
     if (tab === 'dashboard') {
@@ -362,6 +487,8 @@ function switchTab(tab) {
         document.getElementById('section-attendance').classList.remove('hidden');
     } else if (tab === 'wages') {
         document.getElementById('section-wages').classList.remove('hidden');
+    } else if (tab === 'ewa') {
+        document.getElementById('section-ewa').classList.remove('hidden');
     } else if (tab === 'leave') {
         document.getElementById('section-leave').classList.remove('hidden');
     } else if (tab === 'grievance') {
@@ -373,6 +500,7 @@ function switchTab(tab) {
 
 function showLeaveForm() { document.getElementById('leave-form').classList.toggle('hidden'); }
 function showGrievanceForm() { document.getElementById('grievance-form').classList.toggle('hidden'); }
+function showEwaForm() { document.getElementById('ewa-request-form').classList.toggle('hidden'); }
 
 async function submitLeave() {
     const leave_type = document.getElementById('leave-type').value;
