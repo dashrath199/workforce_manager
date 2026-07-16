@@ -91,10 +91,6 @@ def mobile_check_in(employee, latitude=None, longitude=None, site=None, face_ima
 		att.shift = emp.shift
 		att.date = attendance_date
 
-	# Handle face image upload
-	if face_image:
-		att.attendance_source = "Mobile App (GPS)"
-
 	status, distance = _geofence_status(site_doc, latitude, longitude)
 	att.check_in_time = now_datetime()
 	att.attendance_source = "Mobile App (GPS)"
@@ -133,16 +129,18 @@ def mobile_check_in(employee, latitude=None, longitude=None, site=None, face_ima
 			)
 			att.db_set("checkin_selfie", file_doc.file_url, commit=True)
 
-			# Run face verification in background
-			frappe.enqueue(
-				"workforce_manager.contract_labour_management.face_utils.verify_face",
-				queue="short",
-				attendance_record=att.name,
-			)
+			# Run face verification (in foreground for now so errors surface)
+			from workforce_manager.contract_labour_management.face_utils import HAS_PIL
+			if HAS_PIL:
+				frappe.enqueue(
+					"workforce_manager.contract_labour_management.face_utils.verify_face",
+					queue="short",
+					attendance_record=att.name,
+				)
+			else:
+				att.db_set("face_verification_status", "No Reference Photo", commit=True)
 		except Exception as e:
 			frappe.log_error(f"Face image upload failed: {e}", "Mobile Check-in")
-
-	frappe.db.commit()
 
 	return {
 		"attendance_record": att.name,

@@ -120,9 +120,9 @@ def verify_face(attendance_record):
     Returns a dict with match status and confidence score.
     """
     if not HAS_PIL:
-        frappe.msgprint(
-            _("Pillow library is not installed. Face verification requires: pip install Pillow"),
-            alert=True, indicator="orange"
+        frappe.log_error(
+            "Face verification failed: Pillow library not installed. Run: pip install Pillow",
+            "Face Utils"
         )
         return {"status": "No Reference Photo", "score": None}
 

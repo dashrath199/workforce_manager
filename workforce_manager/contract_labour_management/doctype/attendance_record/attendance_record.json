@@ -102,7 +102,7 @@
    "fieldtype": "Select",
    "label": "Face Verification",
    "options": "Pending\nVerified\nMismatched\nNo Reference Photo",
-   "default": "Pending",
+   "default": "",
    "read_only": 1
   },
   {
