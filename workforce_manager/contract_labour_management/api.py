@@ -281,9 +281,7 @@ def get_documents_expiring_count():
 # ---------------------------------------------------------------------------
 
 def _auth_worker(employee, mobile):
-    """Simple auth: verify employee exists and mobile matches (or is admin)."""
-    if frappe.session.user == "Administrator":
-        return frappe.get_doc("Contract Employee", employee)
+    """Simple auth: verify employee exists and mobile matches."""
     emp = frappe.get_doc("Contract Employee", employee)
     digits = "".join(ch for ch in (mobile or "") if ch.isdigit())
     emp_mobile = "".join(ch for ch in (emp.mobile_number or "") if ch.isdigit())
