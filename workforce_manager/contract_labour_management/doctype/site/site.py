@@ -1,7 +1,8 @@
 import frappe
 from frappe.model.document import Document
 import hashlib
-from frappe.utils import now_datetime
+from frappe.utils import now_datetime, get_url
+
 
 class Site(Document):
 	def validate(self):
@@ -17,8 +18,5 @@ class Site(Document):
 		hash_str = hashlib.sha256(raw.encode()).hexdigest()[:16]
 		self.qr_code_id = f"SITE-{self.site_name.upper().replace(' ', '')[:10]}-{hash_str}"
 
-		# Generate QR code image URL using external API
-		# QR code simply encodes the site QR ID (much shorter than JSON)
-		from urllib.parse import quote
-		qr_data = self.qr_code_id
-		self.qr_code_image = f"https://api.qrserver.com/v1/create-qr-code/?size=300x300&data={quote(qr_data)}"
+		# QR code is now served via a local Frappe page (no external API needed)
+		self.qr_download_url = f"{get_url()}/qr/{self.name}"
