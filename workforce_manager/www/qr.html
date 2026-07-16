@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Site QR Code</title>
+    <script src="/assets/workforce_manager/js/qrcode.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+               background: #f0f2f5; display: flex; justify-content: center; align-items: center;
+               min-height: 100vh; padding: 20px; }
+        .card { background: #fff; border-radius: 16px; padding: 32px; text-align: center;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.1); max-width: 450px; width: 100%; }
+        h1 { font-size: 20px; color: #333; margin-bottom: 8px; }
+        .site-name { font-size: 16px; color: #4F46E5; margin-bottom: 24px; font-weight: 600; }
+        #qrcode { display: inline-block; padding: 16px; background: #fff;
+                   border: 2px dashed #ddd; border-radius: 12px; margin-bottom: 20px; }
+        #qrcode img { display: block; margin: 0 auto; }
+        .id-label { font-size: 12px; color: #888; margin-bottom: 4px; }
+        .qr-id { font-size: 13px; color: #333; background: #f8f9ff; padding: 8px 12px;
+                 border-radius: 8px; word-break: break-all; font-family: monospace; margin-bottom: 20px; }
+        .btn { display: inline-block; padding: 12px 32px; border-radius: 8px;
+                border: none; font-size: 14px; cursor: pointer; text-decoration: none;
+                margin: 4px; font-weight: 600; }
+        .btn-primary { background: #4F46E5; color: #fff; }
+        .btn-outline { background: #fff; color: #4F46E5; border: 1px solid #4F46E5; }
+        .btn-success { background: #10B981; color: #fff; }
+        .instructions { text-align: left; background: #f8f9ff; padding: 16px;
+                        border-radius: 12px; margin-top: 20px; font-size: 13px; color: #555; line-height: 1.6; }
+        .error { color: #EF4444; padding: 20px; }
+        @media print {
+            .no-print { display: none !important; }
+            .card { box-shadow: none; padding: 16px; }
+            body { background: #fff; }
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>📸 Site QR Code</h1>
+        <div class="site-name" id="site-name">Loading...</div>
+
+        <div id="qr-container">
+            <div id="qrcode"></div>
+        </div>
+
+        <div class="id-label">QR Code ID:</div>
+        <div class="qr-id" id="qr-id">-</div>
+
+        <div class="no-print">
+            <button class="btn btn-primary" onclick="window.print()">🖨️ Print QR Code</button>
+            <br>
+            <button class="btn btn-success" onclick="downloadQR()">⬇️ Download PNG</button>
+        </div>
+
+        <div class="instructions no-print">
+            <strong>📋 Instructions:</strong><br>
+            1. Print this QR code<br>
+            2. Display it at the site entrance<br>
+            3. Workers scan it via the Worker Portal → QR Scan tab<br>
+            4. They'll be checked in automatically!
+        </div>
+
+        <div id="error-msg" class="error no-print" style="display:none;"></div>
+    </div>
+
+    <script>
+        // Get site name from URL parameters
+        const params = new URLSearchParams(window.location.search);
+        const siteName = params.get('site');
+
+        if (!siteName) {
+            document.getElementById('error-msg').style.display = 'block';
+            document.getElementById('error-msg').textContent = '❌ No site specified. Use /qr?site=SiteName';
+            document.getElementById('site-name').textContent = 'Error';
+            document.getElementById('qr-container').style.display = 'none';
+        } else {
+            // Fetch the site QR code ID from the API
+            fetch('/api/method/workforce_manager.contract_labour_management.api.get_site_qr_code', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'site=' + encodeURIComponent(siteName),
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.message) {
+                    const qrData = data.message.qr_code_id;
+                    const siteDisplay = data.message.site;
+
+                    document.getElementById('site-name').textContent = '📍 ' + siteDisplay;
+                    document.getElementById('qr-id').textContent = qrData;
+
+                    // Generate QR code using the local library
+                    new QRCode(document.getElementById('qrcode'), {
+                        text: qrData,
+                        width: 280,
+                        height: 280,
+                        colorDark: '#1a1a2e',
+                        colorLight: '#ffffff',
+                        correctLevel: QRCode.CorrectLevel.H,
+                    });
+                } else {
+                    throw new Error('No data returned');
+                }
+            })
+            .catch(err => {
+                document.getElementById('error-msg').style.display = 'block';
+                document.getElementById('error-msg').textContent = '❌ Could not load QR code: ' + err.message;
+                document.getElementById('site-name').textContent = 'Error';
+            });
+        }
+
+        function downloadQR() {
+            const canvas = document.querySelector('#qrcode canvas');
+            if (canvas) {
+                const link = document.createElement('a');
+                link.download = (siteName || 'site') + '-qr-code.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            }
+        }
+    </script>
+</body>
+</html>

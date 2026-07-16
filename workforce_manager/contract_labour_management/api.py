@@ -769,35 +769,36 @@ def qr_check_in(employee, mobile=None, qr_code_id=None):
 
 @frappe.whitelist()
 def get_site_qr_code(site):
-    """Get QR code details for a site. Returns the QR image URL."""
+    """Get QR code details for a site. Returns the local QR code page URL."""
     site_doc = frappe.get_doc("Site", site)
     if not site_doc.qr_code_id:
         frappe.throw(f"Site '{site}' has no QR code generated. Please save the site first.")
 
+    from frappe.utils import get_url
+    qr_page_url = f"{get_url()}/qr?site={site_doc.name}"
+
     return {
         "site": site_doc.name,
         "qr_code_id": site_doc.qr_code_id,
-        "qr_code_image": site_doc.qr_code_image,
-        "print_url": f"/app/site/{site_doc.name}",
-        "instructions": "Print this QR code and display it at the site entrance for workers to scan.",
+        "qr_code_image": qr_page_url,
+        "print_url": qr_page_url,
+        "instructions": "Open the QR Code Page link, then print the QR code and display at site entrance.",
     }
 
 
 @frappe.whitelist()
 def regenerate_site_qr_code(site):
-    """Regenerate the QR code ID and image for a site."""
+    """Regenerate the QR code ID for a site."""
     import hashlib
-    from frappe.utils import now_datetime
-    from urllib.parse import quote
+    from frappe.utils import now_datetime, get_url
 
     site_doc = frappe.get_doc("Site", site)
     raw = f"{site_doc.site_name}-{site_doc.name}-{now_datetime()}-regenerated"
     hash_str = hashlib.sha256(raw.encode()).hexdigest()[:16]
     site_doc.qr_code_id = f"SITE-{site_doc.site_name.upper().replace(' ', '')[:10]}-{hash_str}"
 
-    # QR code simply encodes the site QR ID (same format as site.py validate)
-    qr_data = site_doc.qr_code_id
-    site_doc.qr_code_image = f"https://api.qrserver.com/v1/create-qr-code/?size=300x300&data={quote(qr_data)}"
+    # QR code is now served via a local Frappe page
+    site_doc.qr_download_url = f"{get_url()}/qr?site={site_doc.name}"
 
     site_doc.save(ignore_permissions=True)
     frappe.db.commit()
@@ -805,8 +806,8 @@ def regenerate_site_qr_code(site):
     return {
         "site": site_doc.name,
         "qr_code_id": site_doc.qr_code_id,
-        "qr_code_image": site_doc.qr_code_image,
-        "message": "QR code regenerated successfully.",
+        "qr_code_image": f"{get_url()}/qr?site={site_doc.name}",
+        "message": "QR code regenerated successfully. Open the QR Code Page link to view.",
     }
 
 
