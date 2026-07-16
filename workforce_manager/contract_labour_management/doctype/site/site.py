@@ -20,6 +20,5 @@ class Site(Document):
 		# Generate QR code image URL using external API
 		# QR code simply encodes the site QR ID (much shorter than JSON)
 		from urllib.parse import quote
-		from frappe.utils import get_url
 		qr_data = self.qr_code_id
 		self.qr_code_image = f"https://api.qrserver.com/v1/create-qr-code/?size=300x300&data={quote(qr_data)}"
