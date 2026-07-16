@@ -14,6 +14,7 @@
   "check_out_time",
   "hours_worked",
   "ot_hours",
+  "overtime_request",
   "status",
   "sb_face",
   "checkin_selfie",
@@ -77,6 +78,14 @@
    "fieldname": "ot_hours",
    "fieldtype": "Float",
    "label": "OT Hours"
+  },
+  {
+   "fieldname": "overtime_request",
+   "fieldtype": "Link",
+   "label": "Overtime Request",
+   "options": "Overtime Request",
+   "read_only": 1,
+   "description": "Linked Overtime Request for approved OT"
   },
   {
    "fieldname": "status",

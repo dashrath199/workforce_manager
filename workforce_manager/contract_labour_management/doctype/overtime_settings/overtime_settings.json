@@ -1,0 +1,127 @@
+{
+ "actions": [],
+ "autoname": "field:title",
+ "creation": "2024-01-01 10:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "title",
+  "sb_rates",
+  "regular_ot_rate",
+  "holiday_ot_rate",
+  "night_shift_ot_rate",
+  "sb_limits",
+  "max_ot_hours_per_day",
+  "max_ot_hours_per_week",
+  "sb_approval",
+  "require_approval",
+  "auto_approve_up_to_hours",
+  "require_supervisor_approval"
+ ],
+ "fields": [
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title",
+   "reqd": 1,
+   "unique": 1,
+   "default": "Overtime Settings"
+  },
+  {
+   "fieldname": "sb_rates",
+   "fieldtype": "Section Break",
+   "label": "OT Rate Multipliers"
+  },
+  {
+   "fieldname": "regular_ot_rate",
+   "fieldtype": "Float",
+   "label": "Regular OT Rate (x)",
+   "default": 2.0,
+   "description": "Multiplier for regular weekday overtime (e.g. 2.0 = 2x)"
+  },
+  {
+   "fieldname": "holiday_ot_rate",
+   "fieldtype": "Float",
+   "label": "Holiday OT Rate (x)",
+   "default": 3.0,
+   "description": "Multiplier for overtime on holidays/weekends"
+  },
+  {
+   "fieldname": "night_shift_ot_rate",
+   "fieldtype": "Float",
+   "label": "Night Shift OT Rate (x)",
+   "default": 2.5,
+   "description": "Multiplier for overtime during night shifts (e.g. 10PM - 6AM)"
+  },
+  {
+   "fieldname": "sb_limits",
+   "fieldtype": "Section Break",
+   "label": "OT Limits"
+  },
+  {
+   "fieldname": "max_ot_hours_per_day",
+   "fieldtype": "Float",
+   "label": "Max OT Hours per Day",
+   "default": 4.0,
+   "description": "Maximum overtime hours allowed per day per employee"
+  },
+  {
+   "fieldname": "max_ot_hours_per_week",
+   "fieldtype": "Float",
+   "label": "Max OT Hours per Week",
+   "default": 12.0,
+   "description": "Maximum overtime hours allowed per rolling 7-day week"
+  },
+  {
+   "fieldname": "sb_approval",
+   "fieldtype": "Section Break",
+   "label": "Approval Settings"
+  },
+  {
+   "fieldname": "require_approval",
+   "fieldtype": "Check",
+   "label": "Require Approval for OT",
+   "default": 1,
+   "description": "If checked, OT hours must be approved before counting towards wage calculation"
+  },
+  {
+   "fieldname": "auto_approve_up_to_hours",
+   "fieldtype": "Float",
+   "label": "Auto-Approve Up To (Hours)",
+   "default": 2.0,
+   "description": "OT requests up to this many hours are auto-approved (0 = require manual approval always)"
+  },
+  {
+   "fieldname": "require_supervisor_approval",
+   "fieldtype": "Check",
+   "label": "Require Site Supervisor Approval First",
+   "default": 0,
+   "description": "If checked, OT requests go to Site Supervisor first, then HR Manager"
+  }
+ ],
+ "is_submittable": 0,
+ "istable": 0,
+ "links": [],
+ "module": "Contract Labour Management",
+ "name": "Overtime Settings",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "modified": "2024-01-01 10:00:00.000000",
+ "modified_by": "Administrator"
+}
