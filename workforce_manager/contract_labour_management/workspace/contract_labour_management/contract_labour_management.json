@@ -273,11 +273,11 @@
    "color": "#06B6D4",
    "doc_view": "",
    "label": "QR Attendance",
-   "type": "URL",
-   "format": "Scan QR",
+   "type": "DocType",
+   "format": "View Sites",
    "icon": "camera",
-   "url": "/worker-portal?tab=qr",
-   "stats_filter": "",
+   "link_to": "Site",
+   "stats_filter": "[]",
    "idx": 18
   },
   {

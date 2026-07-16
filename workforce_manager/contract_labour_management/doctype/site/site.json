@@ -70,10 +70,10 @@
   },
   {
    "fieldname": "qr_code_image",
-   "fieldtype": "Attach Image",
-   "label": "QR Code Image",
+   "fieldtype": "Data",
+   "label": "QR Code Image URL",
    "read_only": 1,
-   "description": "Download & print this QR code for site check-in"
+   "description": "URL to QR code image. Right-click and save to print for site check-in."
   },
   {
    "fieldname": "contractors",

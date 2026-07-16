@@ -259,6 +259,17 @@
    "idx": 16
   },
   {
+   "color": "#06B6D4",
+   "doc_view": "",
+   "label": "QR Attendance",
+   "type": "DocType",
+   "format": "View Sites",
+   "icon": "camera",
+   "link_to": "Site",
+   "stats_filter": "[]",
+   "idx": 17
+  },
+  {
    "color": "#10B981",
    "doc_view": "",
    "label": "Contractor",
