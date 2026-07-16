@@ -40,8 +40,6 @@ class ContractEmployee(Document):
 		[2,7,9,3,8,0,6,4,1,5],
 		[7,0,4,6,9,1,3,2,5,8],
 	]
-	_verhoeff_inv = [0,4,3,2,1,5,6,7,8,9]
-
 	@staticmethod
 	def _verify_verhoeff(num_str):
 		"""Return True if num_str passes the Verhoeff check-digit algorithm."""
@@ -141,6 +139,7 @@ class ContractEmployee(Document):
 			)
 
 		self.ifsc_code = ifsc
+		self.bank_verified = 1 if (self.bank_account_number and self.ifsc_code) else 0
 
 	def validate_uan(self):
 		if not self.uan_number:
@@ -177,9 +176,12 @@ class ContractEmployee(Document):
 		if kyc_done and bank_done and docs_uploaded and address_done:
 			self.onboarding_status = "Onboarded"
 		elif kyc_done and bank_done and docs_uploaded:
-			self.onboarding_status = "Bank Details Pending"
-		elif kyc_done:
+			# Only address remaining — treat as final step before Onboarded
 			self.onboarding_status = "Documents Pending"
+		elif kyc_done and bank_done:
+			self.onboarding_status = "Documents Pending"
+		elif kyc_done:
+			self.onboarding_status = "Bank Details Pending"
 		elif self.aadhaar_number or self.pan_number:
 			self.onboarding_status = "KYC Pending"
 		else:
