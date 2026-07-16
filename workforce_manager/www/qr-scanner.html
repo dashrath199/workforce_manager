@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>QR Scanner - Worker Portal</title>
+    <script src="/assets/workforce_manager/js/jsqr.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+               background: #000; color: #fff; min-height: 100vh; overflow: hidden; }
+        .header { background: linear-gradient(135deg, #4F46E5, #7C3AED);
+                  color: #fff; padding: 16px; text-align: center; position: relative; }
+        .header h1 { font-size: 18px; }
+        .header .back { position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+                        color: #fff; text-decoration: none; font-size: 24px; cursor: pointer; }
+        .scanner-container { position: relative; width: 100%; max-width: 500px; margin: 0 auto; }
+        #video { width: 100%; display: block; }
+        #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+                   pointer-events: none; }
+        #overlay .scan-area { position: absolute; top: 50%; left: 50%;
+                              transform: translate(-50%, -50%);
+                              width: 60%; height: 60%;
+                              border: 3px solid rgba(79, 70, 229, 0.8);
+                              border-radius: 16px;
+                              box-shadow: 0 0 0 9999px rgba(0,0,0,0.5); }
+        #overlay .corner { position: absolute; width: 20px; height: 20px;
+                           border-color: #4F46E5; border-style: solid; }
+        #overlay .corner.tl { top: 20%; left: 20%; border-width: 3px 0 0 3px; border-radius: 4px 0 0 0; }
+        #overlay .corner.tr { top: 20%; right: 20%; border-width: 3px 3px 0 0; border-radius: 0 4px 0 0; }
+        #overlay .corner.bl { bottom: 20%; left: 20%; border-width: 0 0 3px 3px; border-radius: 0 0 0 4px; }
+        #overlay .corner.br { bottom: 20%; right: 20%; border-width: 0 3px 3px 0; border-radius: 0 0 4px 0; }
+        #overlay .scan-line { position: absolute; left: 22%; width: 56%; height: 2px;
+                              background: #4F46E5; border-radius: 2px;
+                              animation: scanMove 2s ease-in-out infinite;
+                              box-shadow: 0 0 8px #4F46E5; }
+        @keyframes scanMove {
+            0% { top: 22%; }
+            50% { top: 76%; }
+            100% { top: 22%; }
+        }
+        .controls { text-align: center; padding: 20px; }
+        .btn { display: inline-block; padding: 12px 32px; border-radius: 8px;
+                border: none; font-size: 14px; cursor: pointer; font-weight: 600; }
+        .btn-primary { background: #4F46E5; color: #fff; }
+        .btn-outline { background: transparent; color: #fff; border: 1px solid #fff; }
+        .btn-success { background: #10B981; color: #fff; }
+        .status { text-align: center; padding: 12px; font-size: 14px; min-height: 48px; }
+        .status.success { color: #10B981; }
+        .status.error { color: #EF4444; }
+        .status.info { color: #888; }
+        .hidden { display: none !important; }
+        .result-card { position: fixed; bottom: 0; left: 0; right: 0;
+                       background: #1a1a2e; border-radius: 16px 16px 0 0;
+                       padding: 24px; text-align: center;
+                       transform: translateY(100%);
+                       transition: transform 0.3s ease;
+                       box-shadow: 0 -4px 20px rgba(0,0,0,0.3); }
+        .result-card.show { transform: translateY(0); }
+        .result-card h2 { font-size: 20px; margin-bottom: 8px; }
+        .result-card p { font-size: 14px; color: #aaa; margin-bottom: 16px; }
+        .login-form { padding: 16px; max-width: 320px; margin: 0 auto; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 13px; color: #888; margin-bottom: 4px; }
+        .form-group input { width: 100%; padding: 10px 12px; border: 1px solid #333;
+                           border-radius: 8px; font-size: 14px;
+                           background: #1a1a2e; color: #fff; font-family: inherit; }
+        .form-group input::placeholder { color: #555; }
+        .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+                  background: #10B981; color: #fff; padding: 12px 24px;
+                  border-radius: 8px; font-size: 14px; z-index: 1000;
+                  box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: none; }
+        .toast.error { background: #EF4444; }
+        .id-display { font-size: 12px; color: #666; text-align: center; padding: 8px;
+                      font-family: monospace; word-break: break-all; }
+    </style>
+</head>
+<body>
+
+<div id="toast" class="toast"></div>
+
+<div class="header">
+    <a class="back" onclick="goBack()">&larr;</a>
+    <h1>📸 Scan Site QR Code</h1>
+</div>
+
+<!-- Login (if not already logged in via URL params) -->
+<div id="login-section" class="login-form">
+    <p style="color:#888; font-size:13px; text-align:center; margin-bottom:16px;">
+        Enter your Employee ID and Mobile to check in
+    </p>
+    <div class="form-group">
+        <label>Employee ID</label>
+        <input type="text" id="login-employee" placeholder="EMP-2026-00001" />
+    </div>
+    <div class="form-group">
+        <label>Mobile Number</label>
+        <input type="tel" id="login-mobile" placeholder="9999999999" maxlength="10" />
+    </div>
+    <button class="btn btn-primary" onclick="startScanning()" style="width:100%;">
+        📷 Start Scanning
+    </button>
+</div>
+
+<!-- Scanner -->
+<div id="scanner-section" class="hidden">
+    <div class="scanner-container">
+        <video id="video" autoplay playsinline muted></video>
+        <div id="overlay">
+            <div class="scan-area"></div>
+            <div class="corner tl"></div>
+            <div class="corner tr"></div>
+            <div class="corner bl"></div>
+            <div class="corner br"></div>
+            <div class="scan-line"></div>
+        </div>
+    </div>
+    <div class="id-display" id="scanned-id">Point camera at the site QR code</div>
+    <div class="controls">
+        <button class="btn btn-outline" onclick="stopScanner()">Stop Scanner</button>
+    </div>
+</div>
+
+<!-- Result Card -->
+<div class="result-card" id="result-card">
+    <h2 id="result-icon">✅</h2>
+    <h2 id="result-title">Success!</h2>
+    <p id="result-message">You've been checked in.</p>
+    <button class="btn btn-primary" onclick="scanAnother()" style="width:100%;">
+        🔄 Scan Another
+    </button>
+    <button class="btn btn-outline" onclick="goBack()" style="width:100%; margin-top:8px;">
+        ← Back to Portal
+    </button>
+</div>
+
+<script>
+let employee = '';
+let mobile = '';
+let videoStream = null;
+let scanInterval = null;
+let isScanning = false;
+
+// Check for login params in URL
+(function() {
+    const params = new URLSearchParams(window.location.search);
+    const empParam = params.get('employee');
+    const mobParam = params.get('mobile');
+    if (empParam && mobParam) {
+        employee = empParam;
+        mobile = mobParam;
+        document.getElementById('login-employee').value = employee;
+        document.getElementById('login-mobile').value = mobile;
+        document.getElementById('login-section').classList.add('hidden');
+        document.getElementById('scanner-section').classList.remove('hidden');
+        startScanner();
+    }
+})();
+
+function toast(msg, isError) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast' + (isError ? ' error' : '');
+    t.style.display = 'block';
+    setTimeout(function() { t.style.display = 'none'; }, 3000);
+}
+
+function goBack() {
+    history.back();
+}
+
+function startScanning() {
+    employee = document.getElementById('login-employee').value.trim();
+    mobile = document.getElementById('login-mobile').value.trim();
+    if (!employee || !mobile) {
+        toast('Please enter Employee ID and Mobile', true);
+        return;
+    }
+    document.getElementById('login-section').classList.add('hidden');
+    document.getElementById('scanner-section').classList.remove('hidden');
+    startScanner();
+}
+
+function startScanner() {
+    const video = document.getElementById('video');
+    const status = document.getElementById('scanned-id');
+
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: 640, height: 480 } })
+    .then(function(stream) {
+        videoStream = stream;
+        video.srcObject = stream;
+        isScanning = true;
+
+        video.onloadedmetadata = function() {
+            video.play();
+
+            // Create a canvas for frame capture
+            var canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            var ctx = canvas.getContext('2d');
+
+            // Check jsQR is loaded
+            if (typeof jsQR === 'undefined') {
+                status.textContent = '⚠️ QR scanner library not loaded';
+                return;
+            }
+
+            status.textContent = '📷 Scanning...';
+
+            // Scan frames every 300ms
+            scanInterval = setInterval(function() {
+                if (!isScanning || !video.videoWidth) return;
+
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+                var code = jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: "dontInvert",
+                });
+
+                if (code) {
+                    var qrData = code.data;
+                    if (qrData && qrData.trim().startsWith('SITE-')) {
+                        handleScan(qrData.trim());
+                    }
+                }
+            }, 300);
+        };
+    })
+    .catch(function(err) {
+        status.textContent = '❌ Camera access denied. Please allow camera access in settings.';
+    });
+}
+
+function stopScanner() {
+    isScanning = false;
+    if (scanInterval) {
+        clearInterval(scanInterval);
+        scanInterval = null;
+    }
+    if (videoStream) {
+        videoStream.getTracks().forEach(function(track) { track.stop(); });
+        videoStream = null;
+    }
+    document.getElementById('video').srcObject = null;
+}
+
+function handleScan(qrCodeId) {
+    // Stop the scanner
+    stopScanner();
+
+    document.getElementById('scanned-id').textContent = '⏳ Checking in: ' + qrCodeId;
+
+    // Call the check-in API
+    var params = new URLSearchParams();
+    params.append('employee', employee);
+    params.append('mobile', mobile);
+    params.append('qr_code_id', qrCodeId);
+
+    fetch('/api/method/workforce_manager.contract_labour_management.api.qr_check_in', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params,
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        var result = data.message;
+        var card = document.getElementById('result-card');
+        var icon = document.getElementById('result-icon');
+        var title = document.getElementById('result-title');
+        var msg = document.getElementById('result-message');
+
+        if (result && result.already_checked_in) {
+            icon.textContent = '✅';
+            title.textContent = 'Already Checked In!';
+            msg.textContent = 'Checked in today at ' + (result.check_in_time ? result.check_in_time.slice(11,16) : '-');
+        } else if (result && result.check_in_time) {
+            icon.textContent = '✅';
+            title.textContent = 'Check-in Successful!';
+            msg.textContent = 'Checked in at ' + result.check_in_time.slice(11,16);
+        } else if (result && result.message) {
+            icon.textContent = '✅';
+            title.textContent = 'Success';
+            msg.textContent = result.message;
+        } else {
+            icon.textContent = '❌';
+            title.textContent = 'Check-in Failed';
+            msg.textContent = 'Please try again or contact HR.';
+        }
+
+        card.classList.add('show');
+        document.getElementById('scanned-id').textContent = '';
+    })
+    .catch(function(err) {
+        var card = document.getElementById('result-card');
+        document.getElementById('result-icon').textContent = '❌';
+        document.getElementById('result-title').textContent = 'Error';
+        document.getElementById('result-message').textContent = 'Network error. Please try again.';
+        card.classList.add('show');
+        document.getElementById('scanned-id').textContent = '';
+    });
+}
+
+function scanAnother() {
+    document.getElementById('result-card').classList.remove('show');
+    document.getElementById('scanned-id').textContent = 'Point camera at the site QR code';
+    startScanner();
+}
+</script>
+</body>
+</html>
