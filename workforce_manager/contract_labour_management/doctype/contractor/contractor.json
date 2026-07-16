@@ -7,6 +7,9 @@
  "field_order": [
   "contractor_name",
   "vendor_account",
+  "sb_licenses",
+  "contractor_licenses",
+  "sb_legacy",
   "license_no",
   "pf_registration_no",
   "esi_registration_no",
@@ -30,29 +33,56 @@
    "options": "Supplier"
   },
   {
+   "fieldname": "sb_licenses",
+   "fieldtype": "Section Break",
+   "label": "Licenses & Registrations"
+  },
+  {
+   "fieldname": "contractor_licenses",
+   "fieldtype": "Table",
+   "label": "Licenses & Registrations",
+   "options": "Contractor License",
+   "description": "Manage all contractor licenses with expiry tracking and document uploads. Add CLRA, PF, ESI, PT, LWF, GST registrations here."
+  },
+  {
+   "fieldname": "sb_legacy",
+   "fieldtype": "Section Break",
+   "label": "Legacy Registration Fields"
+  },
+  {
    "fieldname": "license_no",
    "fieldtype": "Data",
-   "label": "License No"
+   "label": "License No",
+   "read_only": 1,
+   "description": "Deprecated — use Licenses table above for full tracking with expiry dates"
   },
   {
    "fieldname": "pf_registration_no",
    "fieldtype": "Data",
-   "label": "PF Registration No"
+   "label": "PF Registration No",
+   "read_only": 1,
+   "description": "Deprecated — use Licenses table instead"
   },
   {
    "fieldname": "esi_registration_no",
    "fieldtype": "Data",
-   "label": "ESI Registration No"
+   "label": "ESI Registration No",
+   "read_only": 1,
+   "description": "Deprecated — use Licenses table instead"
   },
   {
    "fieldname": "pt_registration_no",
    "fieldtype": "Data",
-   "label": "PT Registration No"
+   "label": "PT Registration No",
+   "read_only": 1,
+   "description": "Deprecated — use Licenses table instead"
   },
   {
    "fieldname": "lwf_registration_no",
    "fieldtype": "Data",
-   "label": "LWF Registration No"
+   "label": "LWF Registration No",
+   "read_only": 1,
+   "description": "Deprecated — use Licenses table instead"
   },
   {
    "fieldname": "contact",

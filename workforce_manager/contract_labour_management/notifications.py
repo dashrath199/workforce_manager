@@ -30,6 +30,7 @@ def send_expiry_alerts():
 	"""Called daily (see hooks.py scheduler_events)."""
 	_alert_expiring_documents()
 	_alert_overdue_statutory_compliance()
+	_alert_expiring_contractor_licenses()
 
 
 def _alert_expiring_documents():
@@ -49,6 +50,32 @@ def _alert_expiring_documents():
 			message=f"{row.document_type} for employee {row.employee} expires on {row.expiry_date}.",
 			document_type="Contract Employee",
 			document_name=row.employee,
+		)
+
+
+def _alert_expiring_contractor_licenses():
+	"""Notify HR Managers about contractor licenses expiring within 60 days."""
+	from frappe.utils import add_days, today
+	cutoff = add_days(today(), 60)
+	rows = frappe.db.sql("""
+		SELECT cl.name, cl.parent as contractor, cl.license_type, cl.license_number, cl.expiry_date
+		FROM `tabContractor License` cl
+		WHERE cl.parenttype = 'Contractor'
+		  AND cl.expiry_date IS NOT NULL
+		  AND cl.expiry_date <= %(cutoff)s
+		  AND cl.expiry_date >= %(today)s
+		  AND cl.status != 'Expired'
+	""", {"cutoff": cutoff, "today": today()}, as_dict=True)
+
+	for row in rows:
+		_notify_hr_managers(
+			subject=f"Contractor license expiring: {row.license_type} for {row.contractor}",
+			message=(
+				f"{row.license_type} ({row.license_number}) for contractor {row.contractor} "
+				f"expires on {row.expiry_date}. Please arrange renewal."
+			),
+			document_type="Contractor",
+			document_name=row.contractor,
 		)
 
 

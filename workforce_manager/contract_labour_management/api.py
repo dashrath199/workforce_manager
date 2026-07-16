@@ -153,6 +153,22 @@ def get_my_today_attendance(employee):
 # ---------------------------------------------------------------------------
 
 @frappe.whitelist()
+def get_expiring_contractor_licenses_count():
+	"""Custom Number Card — count contractor licenses expiring within 60 days."""
+	from frappe.utils import add_days
+	today_str = today()
+	cutoff = add_days(today_str, 60)
+	count = frappe.db.count(
+		"Contractor License",
+		filters={
+			"expiry_date": ["between", [today_str, cutoff]],
+			"status": ["!=", "Expired"],
+		},
+	)
+	return {"value": count, "fieldtype": "Int"}
+
+
+@frappe.whitelist()
 def get_workspace_kpis():
 	"""Return all KPI values in one call for a custom dashboard refresh."""
 	today_str = today()
@@ -161,6 +177,7 @@ def get_workspace_kpis():
 	total_attendance = frappe.db.count("Attendance Record", filters={"date": today_str, "status": ["!=", "Absent"]})
 	attendance_pct = round((total_attendance / todays_attendance * 100) if todays_attendance else 0, 1)
 
+	cutoff_60 = add_days(today_str, 60)
 	return {
 		"active_employees": active_employees,
 		"todays_attendance": todays_attendance,
@@ -170,6 +187,7 @@ def get_workspace_kpis():
 		"pending_compliance": frappe.db.count("Statutory Compliance Record", filters={"status": "Pending"}),
 		"documents_expiring": frappe.db.count("Employee Document", filters={"expiry_date": ["<=", add_days(today_str, 30)]}),
 		"outside_geofence": frappe.db.count("Attendance Record", filters={"date": today_str, "geofence_status": "Outside"}),
+		"expiring_licenses": frappe.db.count("Contractor License", filters={"expiry_date": ["between", [today_str, cutoff_60]], "status": ["!=", "Expired"]}),
 	}
 
 
