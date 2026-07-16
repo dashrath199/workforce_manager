@@ -119,8 +119,8 @@ def generate_pf_ecr(statutory_record):
     total_er_pension = 0.0
 
     for emp in employees:
-        gross = flt(emp.gross_wage)
-        ee_pf = flt(emp.pf_deduction)
+        gross = flt(emp["gross_wage"])
+        ee_pf = flt(emp["pf_deduction"])
         # Employer contributions
         er_pf = round(gross * 3.67 / 100, 2)
         er_pension = round(gross * 8.33 / 100, 2)
@@ -128,9 +128,9 @@ def generate_pf_ecr(statutory_record):
         er_admin = round(gross * 0.50 / 100, 2)
 
         writer.writerow([
-            emp.pf_number or emp.employee,
-            emp.uan,
-            emp.employee_name,
+            emp["pf_number"] or emp["employee"],
+            emp["uan"],
+            emp["employee_name"],
             f"{gross:.2f}",
             f"{ee_pf:.2f}",
             f"{er_pf:.2f}",
@@ -181,14 +181,14 @@ def generate_esi_return(statutory_record):
     total_er_esi = 0.0
 
     for emp in employees:
-        gross = flt(emp.gross_wage)
-        ee_esi = flt(emp.esi_deduction)
+        gross = flt(emp["gross_wage"])
+        ee_esi = flt(emp["esi_deduction"])
         er_esi = round(gross * 3.25 / 100, 2)
 
         writer.writerow([
-            emp.esi_number or emp.employee,
-            emp.employee_name,
-            emp.employee_name,
+            emp["esi_number"] or emp["employee"],
+            emp["employee_name"],
+            emp["employee_name"],
             f"{gross:.2f}",
             f"{ee_esi:.2f}",
             f"{er_esi:.2f}",
@@ -273,12 +273,12 @@ def generate_pf_challan(statutory_record):
     tg = tee = ter = tpen = 0.0
 
     for i, emp in enumerate(employees, 1):
-        g = flt(emp.gross_wage)
-        ee = flt(emp.pf_deduction)
+        g = flt(emp["gross_wage"])
+        ee = flt(emp["pf_deduction"])
         er = round(g * 3.67 / 100, 2)
         pen = round(g * 8.33 / 100, 2)
         edli = round(g * 0.50 / 100, 2)
-        rows.append([i, emp.employee_name, emp.uan, f"{g:.2f}", f"{ee:.2f}", f"{er:.2f}", f"{pen:.2f}", f"{edli:.2f}"])
+        rows.append([i, emp["employee_name"], emp["uan"], f"{g:.2f}", f"{ee:.2f}", f"{er:.2f}", f"{pen:.2f}", f"{edli:.2f}"])
         tg += g; tee += ee; ter += er; tpen += pen
 
     total = f"{tg:.2f}", "TOTAL", "", "", f"{tee:.2f}", f"{ter:.2f}", f"{tpen:.2f}", ""
@@ -298,10 +298,10 @@ def generate_esi_challan(statutory_record):
     tg = tee = ter = 0.0
 
     for i, emp in enumerate(employees, 1):
-        g = flt(emp.gross_wage)
-        ee = flt(emp.esi_deduction)
+        g = flt(emp["gross_wage"])
+        ee = flt(emp["esi_deduction"])
         er = round(g * 3.25 / 100, 2)
-        rows.append([i, emp.employee_name, emp.esi_number, f"{g:.2f}", f"{ee:.2f}", f"{er:.2f}", f"{ee + er:.2f}"])
+        rows.append([i, emp["employee_name"], emp["esi_number"], f"{g:.2f}", f"{ee:.2f}", f"{er:.2f}", f"{ee + er:.2f}"])
         tg += g; tee += ee; ter += er
 
     html = _challan_html("ESI CHALLAN — ESIC", scr, rows,
@@ -321,10 +321,10 @@ def generate_pt_challan(statutory_record):
     tg = tp = 0.0
 
     for i, emp in enumerate(employees, 1):
-        g = flt(emp.gross_wage)
-        pt = flt(emp.pt_deduction)
+        g = flt(emp["gross_wage"])
+        pt = flt(emp["pt_deduction"])
         if pt > 0:
-            rows.append([i, emp.employee_name, f"{g:.2f}", f"{pt:.2f}"])
+            rows.append([i, emp["employee_name"], f"{g:.2f}", f"{pt:.2f}"])
             tg += g; tp += pt
 
     if not rows:
@@ -348,10 +348,10 @@ def generate_lwf_challan(statutory_record):
     tg = tl = 0.0
 
     for i, emp in enumerate(employees, 1):
-        g = flt(emp.gross_wage)
-        lwf = flt(emp.lwf_deduction)
+        g = flt(emp["gross_wage"])
+        lwf = flt(emp["lwf_deduction"])
         if lwf > 0:
-            rows.append([i, emp.employee_name, f"{g:.2f}", f"{lwf:.2f}"])
+            rows.append([i, emp["employee_name"], f"{g:.2f}", f"{lwf:.2f}"])
             tg += g; tl += lwf
 
     if not rows:
