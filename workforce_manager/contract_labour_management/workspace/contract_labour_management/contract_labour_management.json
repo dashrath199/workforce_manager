@@ -270,6 +270,17 @@
    "idx": 17
   },
   {
+   "color": "#06B6D4",
+   "doc_view": "",
+   "label": "QR Attendance",
+   "type": "URL",
+   "format": "Scan QR",
+   "icon": "camera",
+   "url": "/worker-portal?tab=qr",
+   "stats_filter": "",
+   "idx": 18
+  },
+  {
    "color": "#10B981",
    "doc_view": "",
    "label": "Contractor",

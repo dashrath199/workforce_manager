@@ -681,6 +681,141 @@ def worker_get_overtime_requests(employee, mobile=None, limit=20):
 
 
 # ---------------------------------------------------------------------------
+#  QR Code Attendance Check-in
+# ---------------------------------------------------------------------------
+
+
+@frappe.whitelist(allow_guest=True)
+def qr_check_in(employee, mobile=None, qr_code_id=None):
+    """
+    Check-in using QR code scan. Worker scans the site QR code,
+    provides employee ID + mobile, and attendance is marked.
+
+    POST /api/method/workforce_manager.contract_labour_management.api.qr_check_in
+         {employee: "EMP-001", mobile: "9876543210", qr_code_id: "SITE-SITEA-abc123"}
+    """
+    _auth_worker(employee, mobile)
+
+    if not qr_code_id:
+        frappe.throw("QR Code ID is required. Please scan a valid site QR code.")
+
+    # Find the site by QR code ID
+    site_name = frappe.db.get_value("Site", {"qr_code_id": qr_code_id}, "name")
+    if not site_name:
+        frappe.throw(
+            "Invalid QR Code. This QR code is not registered to any site. "
+            "Please contact your site supervisor."
+        )
+
+    site_doc = frappe.get_doc("Site", site_name)
+
+    # Verify employee is assigned to this site
+    emp = frappe.get_doc("Contract Employee", employee)
+    if emp.site != site_name:
+        frappe.throw(
+            f"You ({employee}) are assigned to '{emp.site}', but this QR code "
+            f"is for '{site_name}'. Please scan the correct site's QR code."
+        )
+
+    # Check if already checked in today
+    attendance_date = today()
+    existing = frappe.db.get_value(
+        "Attendance Record",
+        {"employee": employee, "date": attendance_date},
+        "name",
+    )
+
+    if existing:
+        att = frappe.get_doc("Attendance Record", existing)
+        if att.check_in_time:
+            return {
+                "already_checked_in": True,
+                "attendance_record": att.name,
+                "check_in_time": att.check_in_time,
+                "message": f"You already checked in at {att.check_in_time}.",
+            }
+
+        # Has record but no check-in time (shouldn't happen, but handle it)
+        att.check_in_time = now_datetime()
+        att.attendance_source = "QR Code Scan"
+        att.site = site_name
+        att.save(ignore_permissions=True)
+        frappe.db.commit()
+        return {
+            "attendance_record": att.name,
+            "check_in_time": att.check_in_time,
+            "message": "Checked in successfully via QR code!",
+            "site": site_name,
+        }
+
+    # Create new attendance record
+    att = frappe.new_doc("Attendance Record")
+    att.employee = employee
+    att.site = site_name
+    att.shift = emp.shift
+    att.date = attendance_date
+    att.check_in_time = now_datetime()
+    att.attendance_source = "QR Code Scan"
+    att.save(ignore_permissions=True)
+    frappe.db.commit()
+
+    return {
+        "attendance_record": att.name,
+        "check_in_time": att.check_in_time,
+        "site": site_name,
+        "message": "Checked in successfully via QR code scan!",
+    }
+
+
+@frappe.whitelist()
+def get_site_qr_code(site):
+    """Get QR code details for a site. Returns the QR image URL."""
+    site_doc = frappe.get_doc("Site", site)
+    if not site_doc.qr_code_id:
+        frappe.throw(f"Site '{site}' has no QR code generated. Please save the site first.")
+
+    return {
+        "site": site_doc.name,
+        "qr_code_id": site_doc.qr_code_id,
+        "qr_code_image": site_doc.qr_code_image,
+        "print_url": f"/app/site/{site_doc.name}",
+        "instructions": "Print this QR code and display it at the site entrance for workers to scan.",
+    }
+
+
+@frappe.whitelist()
+def regenerate_site_qr_code(site):
+    """Regenerate the QR code ID and image for a site."""
+    import hashlib
+    from frappe.utils import now_datetime
+    import json
+    from urllib.parse import quote
+
+    site_doc = frappe.get_doc("Site", site)
+    raw = f"{site_doc.site_name}-{site_doc.name}-{now_datetime()}-regenerated"
+    hash_str = hashlib.sha256(raw.encode()).hexdigest()[:16]
+    site_doc.qr_code_id = f"SITE-{site_doc.site_name.upper().replace(' ', '')[:10]}-{hash_str}"
+
+    qr_data = json.dumps({
+        "type": "attendance_checkin",
+        "site": site_doc.name,
+        "qr_id": site_doc.qr_code_id,
+    })
+    encoded = quote(qr_data)
+    site_doc.qr_code_image = f"https://api.qrserver.com/v1/create-qr-code/?size=300x300&data={encoded}"
+
+    site_doc.save(ignore_permissions=True)
+    frappe.db.commit()
+
+    return {
+        "site": site_doc.name,
+        "qr_code_id": site_doc.qr_code_id,
+        "qr_code_image": site_doc.qr_code_image,
+        "message": "QR code regenerated successfully.",
+    }
+
+
+# ---------------------------------------------------------------------------
 #  Workspace Dashboard – Chart data (for custom Dashboard Chart Sources)
 # ---------------------------------------------------------------------------
 
