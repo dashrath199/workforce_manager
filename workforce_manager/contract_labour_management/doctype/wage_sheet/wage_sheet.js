@@ -1,5 +1,6 @@
 frappe.ui.form.on("Wage Sheet", {
 	refresh(frm) {
+		// --- Generate Wage Details button (Draft mode) ---
 		if (frm.doc.docstatus === 0 && frm.doc.site && frm.doc.contractor && frm.doc.wage_month) {
 			frm.add_custom_button(__("Generate Wage Details from Attendance"), () => {
 				frappe.call({
@@ -22,5 +23,43 @@ frappe.ui.form.on("Wage Sheet", {
 				});
 			}).addClass("btn-primary");
 		}
+
+		// --- Statutory Register buttons (Submitted wage sheets only) ---
+		if (frm.doc.docstatus === 1) {
+			frm.add_custom_button(__("📋 Muster Roll"), () => {
+				_generate_register(frm, "workforce_manager.contract_labour_management.registers.generate_muster_roll");
+			}, __("Statutory Registers"));
+			frm.add_custom_button(__("📊 Wage Register"), () => {
+				_generate_register(frm, "workforce_manager.contract_labour_management.registers.generate_wage_register");
+			}, __("Statutory Registers"));
+			frm.add_custom_button(__("💰 Deduction Register"), () => {
+				_generate_register(frm, "workforce_manager.contract_labour_management.registers.generate_deduction_register");
+			}, __("Statutory Registers"));
+		}
 	},
 });
+
+function _generate_register(frm, method) {
+	frappe.call({
+		method: method,
+		args: { wage_sheet: frm.doc.name },
+		freeze: true,
+		freeze_message: __("Generating register PDF..."),
+		callback: (r) => {
+			if (r.message) {
+				frappe.msgprint({
+					message: __("Register generated. <a href='{0}' target='_blank'>Download PDF</a>", [r.message]),
+					indicator: "green",
+					title: __("Success"),
+				});
+			}
+		},
+		error: (r) => {
+			frappe.msgprint({
+				message: __("Failed to generate register. Ensure wkhtmltopdf is installed on the server. Error: {0}", [r.message]),
+				indicator: "red",
+				title: __("Error"),
+			});
+		},
+	});
+}
