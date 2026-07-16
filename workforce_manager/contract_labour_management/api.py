@@ -290,7 +290,7 @@ def _auth_worker(employee, mobile):
     return emp
 
 
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
 def worker_get_attendance(employee, mobile=None, limit=30):
     """Return recent attendance records for a worker."""
     _auth_worker(employee, mobile)
@@ -306,7 +306,7 @@ def worker_get_attendance(employee, mobile=None, limit=30):
     return records
 
 
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
 def worker_get_wage_slips(employee, mobile=None, limit=12):
     """Return wage slip info for recent months."""
     _auth_worker(employee, mobile)
@@ -335,7 +335,7 @@ def worker_get_wage_slips(employee, mobile=None, limit=12):
     return result
 
 
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
 def worker_get_profile(employee, mobile=None):
     """Return worker's profile information."""
     emp = _auth_worker(employee, mobile)
@@ -358,7 +358,7 @@ def worker_get_profile(employee, mobile=None):
     }
 
 
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
 def worker_submit_leave_request(employee, mobile=None, leave_type=None,
                                  from_date=None, to_date=None, reason=None):
     """Submit a leave request from the worker portal."""
@@ -377,7 +377,7 @@ def worker_submit_leave_request(employee, mobile=None, leave_type=None,
     return {"name": lr.name, "status": lr.status, "total_days": lr.total_days}
 
 
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
 def worker_get_leave_requests(employee, mobile=None, limit=20):
     """Return leave requests submitted by a worker."""
     _auth_worker(employee, mobile)
@@ -392,7 +392,7 @@ def worker_get_leave_requests(employee, mobile=None, limit=20):
     return records
 
 
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
 def worker_submit_grievance(employee, mobile=None, category=None,
                              subject=None, description=None):
     """Submit a grievance/complaint from the worker portal."""
@@ -410,7 +410,7 @@ def worker_submit_grievance(employee, mobile=None, category=None,
     return {"name": grv.name, "status": grv.status}
 
 
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
 def worker_get_grievances(employee, mobile=None, limit=20):
     """Return grievances submitted by a worker."""
     _auth_worker(employee, mobile)
