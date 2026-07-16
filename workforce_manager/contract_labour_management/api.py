@@ -788,7 +788,6 @@ def regenerate_site_qr_code(site):
     """Regenerate the QR code ID and image for a site."""
     import hashlib
     from frappe.utils import now_datetime
-    import json
     from urllib.parse import quote
 
     site_doc = frappe.get_doc("Site", site)
@@ -796,13 +795,9 @@ def regenerate_site_qr_code(site):
     hash_str = hashlib.sha256(raw.encode()).hexdigest()[:16]
     site_doc.qr_code_id = f"SITE-{site_doc.site_name.upper().replace(' ', '')[:10]}-{hash_str}"
 
-    qr_data = json.dumps({
-        "type": "attendance_checkin",
-        "site": site_doc.name,
-        "qr_id": site_doc.qr_code_id,
-    })
-    encoded = quote(qr_data)
-    site_doc.qr_code_image = f"https://api.qrserver.com/v1/create-qr-code/?size=300x300&data={encoded}"
+    # QR code simply encodes the site QR ID (same format as site.py validate)
+    qr_data = site_doc.qr_code_id
+    site_doc.qr_code_image = f"https://api.qrserver.com/v1/create-qr-code/?size=300x300&data={quote(qr_data)}"
 
     site_doc.save(ignore_permissions=True)
     frappe.db.commit()

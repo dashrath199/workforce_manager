@@ -70,7 +70,7 @@
   },
   {
    "fieldname": "qr_code_image",
-   "fieldtype": "Data",
+   "fieldtype": "Small Text",
    "label": "QR Code Image URL",
    "read_only": 1,
    "description": "URL to QR code image. Right-click and save to print for site check-in."
