@@ -155,7 +155,7 @@
    "fieldtype": "Select",
    "label": "Status",
    "options": "Draft\nPending Supervisor\nSubmitted\nApproved\nRejected\nCancelled",
-   "default": "Submit",
+   "default": "Draft",
    "reqd": 1,
    "in_list_view": 1,
    "in_standard_filter": 1

@@ -237,6 +237,17 @@
    "idx": 15
   },
   {
+   "color": "#8B5CF6",
+   "doc_view": "",
+   "label": "Overtime Request",
+   "type": "DocType",
+   "format": "{} Pending Approval",
+   "icon": "clock",
+   "link_to": "Overtime Request",
+   "stats_filter": "[[\"Overtime Request\",\"status\",\"in\",[\"Submitted\",\"Pending Supervisor\"]]]",
+   "idx": 16
+  },
+  {
    "color": "#4F46E5",
    "doc_view": "",
    "label": "Site",
