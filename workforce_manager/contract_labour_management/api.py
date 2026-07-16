@@ -277,6 +277,157 @@ def get_documents_expiring_count():
 
 
 # ---------------------------------------------------------------------------
+#  Worker Self-Service Portal — API endpoints
+# ---------------------------------------------------------------------------
+
+def _auth_worker(employee, mobile):
+    """Simple auth: verify employee exists and mobile matches (or is admin)."""
+    if frappe.session.user == "Administrator":
+        return frappe.get_doc("Contract Employee", employee)
+    emp = frappe.get_doc("Contract Employee", employee)
+    digits = "".join(ch for ch in (mobile or "") if ch.isdigit())
+    emp_mobile = "".join(ch for ch in (emp.mobile_number or "") if ch.isdigit())
+    if not emp_mobile or digits != emp_mobile:
+        frappe.throw("Authentication failed: Mobile number does not match.")
+    return emp
+
+
+@frappe.whitelist()
+def worker_get_attendance(employee, mobile=None, limit=30):
+    """Return recent attendance records for a worker."""
+    _auth_worker(employee, mobile)
+    records = frappe.get_all(
+        "Attendance Record",
+        filters={"employee": employee},
+        fields=["name", "date", "check_in_time", "check_out_time",
+                "hours_worked", "ot_hours", "status", "attendance_source",
+                "geofence_status", "face_verification_status"],
+        order_by="date desc",
+        limit_page_length=limit,
+    )
+    return records
+
+
+@frappe.whitelist()
+def worker_get_wage_slips(employee, mobile=None, limit=12):
+    """Return wage slip info for recent months."""
+    _auth_worker(employee, mobile)
+    # Find wage sheets containing this employee
+    details = frappe.get_all(
+        "Wage Sheet Detail",
+        filters={"employee": employee},
+        fields=["parent", "gross_wage", "net_wage", "days_present", "ot_hours"],
+        order_by="creation desc",
+        limit_page_length=limit,
+    )
+    result = []
+    for d in details:
+        ws = frappe.get_cached_doc("Wage Sheet", d.parent)
+        result.append({
+            "wage_sheet": d.parent,
+            "month": ws.wage_month,
+            "site": ws.site,
+            "contractor": ws.contractor,
+            "days_present": d.days_present,
+            "ot_hours": d.ot_hours,
+            "gross_wage": d.gross_wage,
+            "net_wage": d.net_wage,
+            "status": ws.status,
+        })
+    return result
+
+
+@frappe.whitelist()
+def worker_get_profile(employee, mobile=None):
+    """Return worker's profile information."""
+    emp = _auth_worker(employee, mobile)
+    return {
+        "name": emp.name,
+        "employee_name": emp.first_name + (" " + (emp.last_name or "")).rstrip(),
+        "mobile": emp.mobile_number,
+        "site": emp.site,
+        "contractor": emp.contractor,
+        "shift": emp.shift,
+        "date_of_joining": str(emp.date_of_joining or ""),
+        "aadhaar_verified": emp.aadhaar_verified,
+        "pan_verified": emp.pan_verified,
+        "uan_verified": emp.uan_verified,
+        "bank_verified": emp.bank_verified,
+        "onboarding_status": emp.onboarding_status,
+        "bank_name": emp.bank_name,
+        "bank_account": emp.bank_account_number,
+        "ifsc": emp.ifsc_code,
+    }
+
+
+@frappe.whitelist()
+def worker_submit_leave_request(employee, mobile=None, leave_type=None,
+                                 from_date=None, to_date=None, reason=None):
+    """Submit a leave request from the worker portal."""
+    _auth_worker(employee, mobile)
+    if not all([leave_type, from_date, to_date, reason]):
+        frappe.throw("All fields are required: leave_type, from_date, to_date, reason")
+
+    lr = frappe.new_doc("Leave Request")
+    lr.employee = employee
+    lr.leave_type = leave_type
+    lr.from_date = from_date
+    lr.to_date = to_date
+    lr.reason = reason
+    lr.save(ignore_permissions=True)
+    frappe.db.commit()
+    return {"name": lr.name, "status": lr.status, "total_days": lr.total_days}
+
+
+@frappe.whitelist()
+def worker_get_leave_requests(employee, mobile=None, limit=20):
+    """Return leave requests submitted by a worker."""
+    _auth_worker(employee, mobile)
+    records = frappe.get_all(
+        "Leave Request",
+        filters={"employee": employee},
+        fields=["name", "leave_type", "from_date", "to_date",
+                "total_days", "reason", "status", "remarks", "creation"],
+        order_by="creation desc",
+        limit_page_length=limit,
+    )
+    return records
+
+
+@frappe.whitelist()
+def worker_submit_grievance(employee, mobile=None, category=None,
+                             subject=None, description=None):
+    """Submit a grievance/complaint from the worker portal."""
+    _auth_worker(employee, mobile)
+    if not all([category, subject, description]):
+        frappe.throw("All fields are required: category, subject, description")
+
+    grv = frappe.new_doc("Grievance")
+    grv.employee = employee
+    grv.category = category
+    grv.subject = subject
+    grv.description = description
+    grv.save(ignore_permissions=True)
+    frappe.db.commit()
+    return {"name": grv.name, "status": grv.status}
+
+
+@frappe.whitelist()
+def worker_get_grievances(employee, mobile=None, limit=20):
+    """Return grievances submitted by a worker."""
+    _auth_worker(employee, mobile)
+    records = frappe.get_all(
+        "Grievance",
+        filters={"employee": employee},
+        fields=["name", "category", "subject", "description",
+                "status", "resolution_notes", "creation"],
+        order_by="creation desc",
+        limit_page_length=limit,
+    )
+    return records
+
+
+# ---------------------------------------------------------------------------
 #  Workspace Dashboard – Chart data (for custom Dashboard Chart Sources)
 # ---------------------------------------------------------------------------
 

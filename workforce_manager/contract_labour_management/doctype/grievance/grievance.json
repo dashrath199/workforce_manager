@@ -1,0 +1,129 @@
+{
+ "actions": [],
+ "autoname": "naming_series:",
+ "creation": "2024-01-01 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "employee",
+  "employee_name",
+  "category",
+  "subject",
+  "description",
+  "status",
+  "resolution_notes",
+  "resolved_by",
+  "resolved_date"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Series",
+   "label": "Series",
+   "options": "GRV-.YYYY.-.#####",
+   "default": "GRV-.YYYY.-.#####"
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Employee",
+   "options": "Contract Employee",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "label": "Employee Name",
+   "fetch_from": "employee.first_name",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "category",
+   "fieldtype": "Select",
+   "label": "Category",
+   "options": "Wage Issue\nAttendance Issue\nSafety Concern\nHarassment\nDocument Issue\nOther",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "subject",
+   "fieldtype": "Data",
+   "label": "Subject",
+   "reqd": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description",
+   "reqd": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Open\nIn Progress\nResolved\nClosed",
+   "default": "Open",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "resolution_notes",
+   "fieldtype": "Small Text",
+   "label": "Resolution Notes"
+  },
+  {
+   "fieldname": "resolved_by",
+   "fieldtype": "Link",
+   "label": "Resolved By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "resolved_date",
+   "fieldtype": "Date",
+   "label": "Resolved Date",
+   "read_only": 1
+  }
+ ],
+ "is_submittable": 0,
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "module": "Contract Labour Management",
+ "name": "Grievance",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Site Supervisor"
+  }
+ ],
+ "modified": "2024-01-01 12:00:00.000000",
+ "modified_by": "Administrator"
+}
