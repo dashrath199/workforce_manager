@@ -308,7 +308,6 @@
 <script>
 let employee = "";
 let mobile = "";
-let qrScannerRunning = false;
 
 function toast(msg, isError) {
     const t = document.getElementById('toast');
@@ -544,11 +543,7 @@ function startQrScanner() {
 
 function stopQrScanner() {
     if (qrScannerInstance) {
-        try {
-            qrScannerInstance.stop().then(function() {
-                qrScannerInstance.clear();
-            }).catch(function() {});
-        } catch(e) {}
+        qrScannerInstance.stop().catch(function() {});
         qrScannerInstance = null;
     }
 
