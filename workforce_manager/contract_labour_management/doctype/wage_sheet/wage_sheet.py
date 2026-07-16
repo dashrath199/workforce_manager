@@ -109,6 +109,7 @@ class WageSheet(Document):
 			scr.total_amount = flt(scr.total_amount) + total_statutory
 		else:
 			scr = frappe.new_doc("Statutory Compliance Record")
+			scr.naming_series = "SCR-.YYYY.-.#####"
 			scr.contractor = self.contractor
 			scr.wage_month = self.wage_month
 			scr.due_date = default_statutory_due_date(self.wage_month)
