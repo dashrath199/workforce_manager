@@ -12,6 +12,9 @@
   "geofence_lat",
   "geofence_long",
   "geofence_radius",
+  "sb_qr_code",
+  "qr_code_id",
+  "qr_code_image",
   "contractors"
  ],
  "fields": [
@@ -52,6 +55,25 @@
    "fieldtype": "Float",
    "label": "Geofence Radius (Meters)",
    "default": "50"
+  },
+  {
+   "fieldname": "sb_qr_code",
+   "fieldtype": "Section Break",
+   "label": "QR Code Attendance"
+  },
+  {
+   "fieldname": "qr_code_id",
+   "fieldtype": "Data",
+   "label": "QR Code ID",
+   "read_only": 1,
+   "description": "Unique QR identifier for site check-in. Auto-generated."
+  },
+  {
+   "fieldname": "qr_code_image",
+   "fieldtype": "Data",
+   "label": "QR Code Image URL",
+   "read_only": 1,
+   "description": "URL to QR code image. Right-click and save to print for site check-in."
   },
   {
    "fieldname": "contractors",

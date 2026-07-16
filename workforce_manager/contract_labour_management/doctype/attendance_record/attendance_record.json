@@ -131,7 +131,7 @@
    "fieldname": "attendance_source",
    "fieldtype": "Select",
    "label": "Attendance Source",
-   "options": "Web\nMobile App (GPS)",
+   "options": "Web\nMobile App (GPS)\nQR Code Scan",
    "default": "Web"
   },
   {
