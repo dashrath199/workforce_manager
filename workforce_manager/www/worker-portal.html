@@ -494,8 +494,10 @@ async function submitEwaRequest() {
 // ---------------------------------------------------------------------------
 
 function openQrScanner() {
-    var url = '/qr-scanner?employee=' + encodeURIComponent(employee) + '&mobile=' + encodeURIComponent(mobile);
-    window.open(url, '_blank');
+    // Store credentials in sessionStorage so the scanner page can access them
+    sessionStorage.setItem('qr_employee', employee);
+    sessionStorage.setItem('qr_mobile', mobile);
+    window.location.href = '/qr-scanner';
 }
 
 async function loadQrCheckins() {

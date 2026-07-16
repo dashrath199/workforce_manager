@@ -141,16 +141,17 @@ let videoStream = null;
 let scanInterval = null;
 let isScanning = false;
 
-// Check for login params in URL
+// Check for stored credentials in sessionStorage (set by worker portal)
 (function() {
-    const params = new URLSearchParams(window.location.search);
-    const empParam = params.get('employee');
-    const mobParam = params.get('mobile');
-    if (empParam && mobParam) {
-        employee = empParam;
-        mobile = mobParam;
+    const storedEmp = sessionStorage.getItem('qr_employee');
+    const storedMob = sessionStorage.getItem('qr_mobile');
+    if (storedEmp && storedMob) {
+        employee = storedEmp;
+        mobile = storedMob;
         document.getElementById('login-employee').value = employee;
         document.getElementById('login-mobile').value = mobile;
+        sessionStorage.removeItem('qr_employee');
+        sessionStorage.removeItem('qr_mobile');
         document.getElementById('login-section').classList.add('hidden');
         document.getElementById('scanner-section').classList.remove('hidden');
         startScanner();
