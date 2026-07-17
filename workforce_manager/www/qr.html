@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Site QR Code</title>
-    <script src="/assets/workforce_manager/js/qrcode.min.js"></script>
+    <!-- Inline JS library (injected via Python context — works after server restart) -->
+    <script>{{ qrcode_js | safe }}</script>
+    <!-- CDN fallback for when Python context is not available (e.g. before server restart) -->
+    <script>if (typeof QRCode === 'undefined') { var s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js'; document.head.appendChild(s); }</script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
