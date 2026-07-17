@@ -19,4 +19,4 @@ class Site(Document):
 		self.qr_code_id = f"SITE-{self.site_name.upper().replace(' ', '')[:10]}-{hash_str}"
 
 		# QR code is now served via a local Frappe page (no external API needed)
-		self.qr_download_url = f"{get_url()}/qr/{self.name}"
+		self.qr_download_url = f"{get_url()}/qr?site={self.name}"
