@@ -771,10 +771,20 @@ def qr_check_in(employee, mobile=None, qr_code_id=None):
 
 @frappe.whitelist(allow_guest=True)
 def get_site_qr_code(site):
-    """Get QR code details for a site. Returns the local QR code page URL."""
+    """Get QR code details for a site. Returns the local QR code page URL.
+    Auto-generates the QR code if it's missing (handles case where validate
+    didn't run due to bench cache or legacy sites).
+    """
     site_doc = frappe.get_doc("Site", site)
+
+    # Auto-generate QR code if missing (e.g. legacy sites or if bench needs restart)
     if not site_doc.qr_code_id:
-        frappe.throw(f"Site '{site}' has no QR code generated. Please save the site first.")
+        site_doc.generate_qr_code_id()
+        site_doc.save(ignore_permissions=True)
+        frappe.db.commit()
+        frappe.logger().info(
+            f"Auto-generated QR code for Site '{site}' — was missing on page load."
+        )
 
     from frappe.utils import get_url
     from urllib.parse import quote

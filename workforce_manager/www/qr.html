@@ -87,6 +87,17 @@
             })
             .then(r => r.json())
             .then(data => {
+                // API returned an error (e.g. frappe.throw), no message field
+                if (data.exc_type) {
+                    // Try to extract the user-friendly error from _server_messages
+                    let errorMsg = 'Server error';
+                    try {
+                        const msgs = JSON.parse(data._server_messages || '[]');
+                        if (msgs.length) errorMsg = JSON.parse(msgs[0]).message;
+                    } catch (_) {}
+                    throw new Error(errorMsg);
+                }
+
                 if (data.message) {
                     const qrData = data.message.qr_code_id;
                     const siteDisplay = data.message.site;
@@ -104,12 +115,12 @@
                         correctLevel: QRCode.CorrectLevel.H,
                     });
                 } else {
-                    throw new Error('No data returned');
+                    throw new Error('No data returned from server');
                 }
             })
             .catch(err => {
                 document.getElementById('error-msg').style.display = 'block';
-                document.getElementById('error-msg').textContent = '❌ Could not load QR code: ' + err.message;
+                document.getElementById('error-msg').textContent = '❌ ' + err.message;
                 document.getElementById('site-name').textContent = 'Error';
             });
         }
