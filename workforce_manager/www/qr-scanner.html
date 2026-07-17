@@ -275,6 +275,21 @@ function handleScan(qrCodeId) {
         var title = document.getElementById('result-title');
         var msg = document.getElementById('result-message');
 
+        // Check for Frappe server errors (frappe.throw -> exc_type & _server_messages)
+        if (data.exc_type) {
+            var errorMsg = 'Server error';
+            try {
+                var msgs = JSON.parse(data._server_messages || '[]');
+                if (msgs.length) errorMsg = JSON.parse(msgs[0]).message;
+            } catch (_) {}
+            icon.textContent = '❌';
+            title.textContent = 'Check-in Failed';
+            msg.textContent = errorMsg;
+            card.classList.add('show');
+            document.getElementById('scanned-id').textContent = '';
+            return;
+        }
+
         if (result && result.already_checked_in) {
             icon.textContent = '✅';
             title.textContent = 'Already Checked In!';
