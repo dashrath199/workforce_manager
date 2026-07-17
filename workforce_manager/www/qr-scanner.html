@@ -196,7 +196,7 @@ function waitForLibrary(callback, retries) {
     }
 }
 
-function startScanLoop(video, canvas, ctx, status) {
+function startScanLoop(video, canvas, ctx) {
     scanInterval = setInterval(function() {
         if (!isScanning || !video.videoWidth) return;
 
@@ -239,7 +239,7 @@ function startScanner() {
             status.textContent = '⏳ Loading QR library...';
             waitForLibrary(function() {
                 status.textContent = '📷 Scanning...';
-                startScanLoop(video, canvas, ctx, status);
+                startScanLoop(video, canvas, ctx);
             });
         };
     })
