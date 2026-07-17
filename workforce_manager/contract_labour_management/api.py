@@ -769,7 +769,7 @@ def qr_check_in(employee, mobile=None, qr_code_id=None):
     }
 
 
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
 def get_site_qr_code(site):
     """Get QR code details for a site. Returns the local QR code page URL."""
     site_doc = frappe.get_doc("Site", site)
