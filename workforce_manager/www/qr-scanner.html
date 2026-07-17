@@ -286,12 +286,30 @@ function handleScan(qrCodeId) {
         var title = document.getElementById('result-title');
         var msg = document.getElementById('result-message');
 
-        // Check for Frappe server errors (frappe.throw -> exc_type & _server_messages)
+        // Check for Frappe server errors
         if (data.exc_type) {
-            var errorMsg = 'Server error';
+            var errorMsg = 'Server error. Please contact HR.';
             try {
                 var msgs = JSON.parse(data._server_messages || '[]');
-                if (msgs.length) errorMsg = JSON.parse(msgs[0]).message;
+                if (msgs.length) {
+                    errorMsg = JSON.parse(msgs[0]).message;
+                } else {
+                    // _server_messages empty — try to extract from the traceback
+                    var exc = data.exc || '';
+                    var lines = exc.split('\n');
+                    // Look for 'raises' or last meaningful line
+                    for (var i = lines.length - 1; i >= 0; i--) {
+                        var line = lines[i].trim();
+                        if (line && !line.startsWith('Traceback') && !line.startsWith('File') && !line.startsWith('  ')) {
+                            errorMsg = line;
+                            break;
+                        }
+                        if (line.startsWith('frappe.exceptions.')) {
+                            errorMsg = line.split(':').pop() || errorMsg;
+                            break;
+                        }
+                    }
+                }
             } catch (_) {}
             icon.textContent = '❌';
             title.textContent = 'Check-in Failed';
