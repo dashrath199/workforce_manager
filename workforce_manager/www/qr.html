@@ -80,10 +80,10 @@
             document.getElementById('qr-container').style.display = 'none';
         } else {
             // Fetch the site QR code ID from the API
-            fetch('/api/method/workforce_manager.contract_labour_management.api.get_site_qr_code', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: 'site=' + encodeURIComponent(siteName),
+            // Using GET to avoid CSRF token issues — Frappe requires CSRF header
+            // for POST requests from logged-in users on standalone pages
+            fetch('/api/method/workforce_manager.contract_labour_management.api.get_site_qr_code?site=' + encodeURIComponent(siteName), {
+                method: 'GET',
             })
             .then(r => r.json())
             .then(data => {
