@@ -763,6 +763,7 @@ def _qr_check_in(employee, mobile, qr_code_id):
 
     # Create new attendance record
     att = frappe.new_doc("Attendance Record")
+    att.naming_series = "ATT-.YYYY.-.#####"
     att.employee = employee
     att.site = site_name
     att.shift = emp.shift
