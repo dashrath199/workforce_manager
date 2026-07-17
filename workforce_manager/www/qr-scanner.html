@@ -297,17 +297,16 @@ function handleScan(qrCodeId) {
                     // _server_messages empty — try to extract from the traceback
                     var exc = data.exc || '';
                     var lines = exc.split('\n');
-                    // Look for 'raises' or last meaningful line
+                    // Walk backwards through the traceback looking for the error line
                     for (var i = lines.length - 1; i >= 0; i--) {
                         var line = lines[i].trim();
-                        if (line && !line.startsWith('Traceback') && !line.startsWith('File') && !line.startsWith('  ')) {
-                            errorMsg = line;
-                            break;
-                        }
-                        if (line.startsWith('frappe.exceptions.')) {
-                            errorMsg = line.split(':').pop() || errorMsg;
-                            break;
-                        }
+                        if (!line) continue;
+                        // Skip standard traceback boilerplate
+                        if (line.startsWith('Traceback') || line.startsWith('File') || line.startsWith('  ')) continue;
+                        // Found the error line (last non-boilerplate line in traceback)
+                        // e.g. "frappe.exceptions.ValidationError: Some message" or "ValueError: ..."
+                        errorMsg = line.indexOf(':') > 0 ? line.split(':').slice(1).join(':').trim() : line;
+                        break;
                     }
                 }
             } catch (_) {}
