@@ -696,6 +696,17 @@ def qr_check_in(employee, mobile=None, qr_code_id=None):
     POST /api/method/workforce_manager.contract_labour_management.api.qr_check_in
          {employee: "EMP-001", mobile: "9876543210", qr_code_id: "SITE-SITEA-abc123"}
     """
+    try:
+        return _qr_check_in(employee, mobile, qr_code_id)
+    except Exception:
+        frappe.log_error(
+            title="QR Check-in Error",
+            message=frappe.get_traceback()
+        )
+        raise
+
+
+def _qr_check_in(employee, mobile, qr_code_id):
     _auth_worker(employee, mobile)
 
     if not qr_code_id:
