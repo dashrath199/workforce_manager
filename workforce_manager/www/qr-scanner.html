@@ -185,6 +185,37 @@ function startScanning() {
     startScanner();
 }
 
+function waitForLibrary(callback, retries) {
+    retries = retries || 50;  // ~10 seconds max wait (50 * 200ms)
+    if (typeof jsQR !== 'undefined') {
+        callback();
+    } else if (retries > 0) {
+        setTimeout(function() { waitForLibrary(callback, retries - 1); }, 200);
+    } else {
+        document.getElementById('scanned-id').textContent = '⚠️ QR library failed to load. Please refresh and try again.';
+    }
+}
+
+function startScanLoop(video, canvas, ctx, status) {
+    scanInterval = setInterval(function() {
+        if (!isScanning || !video.videoWidth) return;
+
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+        var code = jsQR(imageData.data, imageData.width, imageData.height, {
+            inversionAttempts: "dontInvert",
+        });
+
+        if (code) {
+            var qrData = code.data;
+            if (qrData && qrData.trim().startsWith('SITE-')) {
+                handleScan(qrData.trim());
+            }
+        }
+    }, 300);
+}
+
 function startScanner() {
     const video = document.getElementById('video');
     const status = document.getElementById('scanned-id');
@@ -204,32 +235,12 @@ function startScanner() {
             canvas.height = video.videoHeight;
             var ctx = canvas.getContext('2d');
 
-            // Check jsQR is loaded
-            if (typeof jsQR === 'undefined') {
-                status.textContent = '⚠️ QR scanner library not loaded';
-                return;
-            }
-
-            status.textContent = '📷 Scanning...';
-
-            // Scan frames every 300ms
-            scanInterval = setInterval(function() {
-                if (!isScanning || !video.videoWidth) return;
-
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-
-                var code = jsQR(imageData.data, imageData.width, imageData.height, {
-                    inversionAttempts: "dontInvert",
-                });
-
-                if (code) {
-                    var qrData = code.data;
-                    if (qrData && qrData.trim().startsWith('SITE-')) {
-                        handleScan(qrData.trim());
-                    }
-                }
-            }, 300);
+            // Wait for jsQR library to be available (inline injection or CDN fallback)
+            status.textContent = '⏳ Loading QR library...';
+            waitForLibrary(function() {
+                status.textContent = '📷 Scanning...';
+                startScanLoop(video, canvas, ctx, status);
+            });
         };
     })
     .catch(function(err) {
