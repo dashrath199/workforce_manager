@@ -213,7 +213,17 @@
                     📷 Open Scanner
                 </a>
             </div>
-            <div class="card">
+	    <div class="card" style="text-align:center; border: 2px dashed #f59e0b;">
+                <h3>🧪 Test GPS Check-in (Dev Only)</h3>
+                <p style="font-size:13px; color:#666; margin-bottom:16px;">
+                    Skips QR scan. Tests geofence using your current GPS location.
+                </p>
+                <button onclick="testGpsCheckIn()" class="btn btn-outline" style="width:auto; padding:12px 32px;">
+                    📍 Check In With My Location
+                </button>
+                <div id="gps-test-result" style="margin-top:14px; font-size:13px; text-align:left;"></div>
+            </div>
+	    <div class="card">
                 <h3>📋 Today's QR Check-ins</h3>
                 <div id="qr-checkins-list">
                     <p style="color:#888; font-size:13px;">No QR check-ins today.</p>
@@ -316,6 +326,53 @@ function login() {
     mobile = document.getElementById('login-mobile').value.trim();
     if (!employee || !mobile) { toast('Please enter Employee ID and Mobile', true); return; }
     loadDashboard();
+}
+
+function testGpsCheckIn() {
+    const resultDiv = document.getElementById('gps-test-result');
+    resultDiv.innerHTML = '<p style="color:#666;">📡 Getting your location...</p>';
+
+    if (!navigator.geolocation) {
+        resultDiv.innerHTML = '<p style="color:#dc2626;">Geolocation is not supported by this browser.</p>';
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        resultDiv.innerHTML = `<p style="color:#666;">📍 Location acquired (±${Math.round(pos.coords.accuracy)}m). Checking in...</p>`;
+
+        const params = new URLSearchParams();
+        params.append('employee', employee);
+        params.append('mobile', mobile);
+        params.append('latitude', lat);
+        params.append('longitude', lng);
+
+        try {
+            const r = await fetch('/api/method/workforce_manager.contract_labour_management.api.mobile_check_in', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: params,
+            });
+            const data = await r.json();
+            if (data.exception) {
+                resultDiv.innerHTML = `<p style="color:#dc2626;"><b>Rejected:</b> ${data.exception}</p>`;
+                return;
+            }
+            const res = data.message;
+            const color = res.geofence_status === 'Inside' ? '#16a34a' : '#dc2626';
+            resultDiv.innerHTML = `
+                <p><b>Status:</b> <span style="color:${color};">${res.geofence_status}</span></p>
+                <p><b>Distance from site:</b> ${res.distance_m}m</p>
+                <p><b>Message:</b> ${res.message}</p>
+                <p style="color:#888; font-size:12px;">Your coords: ${lat.toFixed(6)}, ${lng.toFixed(6)}</p>
+            `;
+        } catch (e) {
+            resultDiv.innerHTML = `<p style="color:#dc2626;">Error: ${e.message}</p>`;
+        }
+    }, (err) => {
+        resultDiv.innerHTML = `<p style="color:#dc2626;">Location error: ${err.message}</p>`;
+    }, { enableHighAccuracy: true, timeout: 10000 });
 }
 
 async function api(method, args) {

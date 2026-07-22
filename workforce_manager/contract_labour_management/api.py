@@ -66,12 +66,13 @@ def _append_geofence_log(attendance, latitude, longitude, status):
 #  Mobile check-in / check-out
 # ---------------------------------------------------------------------------
 
-@frappe.whitelist()
-def mobile_check_in(employee, latitude=None, longitude=None, site=None, face_image=None):
+@frappe.whitelist(allow_guest=True)
+def mobile_check_in(employee, mobile=None, latitude=None, longitude=None, site=None, face_image=None):
 	"""
 	Mobile check-in with optional face verification photo.
 	face_image should be a base64-encoded image string.
 	"""
+	_auth_worker(employee, mobile)
 	emp, site_doc = _resolve_employee_and_site(employee, site)
 
 	attendance_date = today()
@@ -153,8 +154,9 @@ def mobile_check_in(employee, latitude=None, longitude=None, site=None, face_ima
 	}
 
 
-@frappe.whitelist()
-def mobile_check_out(employee, latitude=None, longitude=None, site=None):
+@frappe.whitelist(allow_guest=True)
+def mobile_check_out(employee, mobile=None, latitude=None, longitude=None, site=None):
+	_auth_worker(employee, mobile)
 	emp, site_doc = _resolve_employee_and_site(employee, site)
 
 	attendance_date = today()
