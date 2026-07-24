@@ -61,7 +61,37 @@ def _append_geofence_log(attendance, latitude, longitude, status):
 		"status": status,
 	})
 
+def _save_checkin_selfie(att, face_image, attendance_date):
+    """Decode and attach a base64 selfie image to an Attendance Record."""
+    if not face_image:
+        return
+    from frappe.utils.file_manager import save_file
+    import base64
+    import re
 
+    if isinstance(face_image, str) and "," in face_image:
+        header, data = face_image.split(",", 1)
+    else:
+        data = face_image
+        header = "image/jpeg"
+
+    mime_match = re.match(r"data:([^;]+)", header) if "," in face_image else None
+    mime_type = mime_match.group(1) if mime_match else "image/jpeg"
+    extension = mime_type.split("/")[-1] if "/" in mime_type else "jpg"
+
+    try:
+        raw_data = base64.b64decode(data)
+        file_name = f"qr_checkin_{att.name}_{attendance_date}.{extension}"
+        file_doc = save_file(
+            fname=file_name,
+            content=raw_data,
+            dt="Attendance Record",
+            dn=att.name,
+            is_private=1,
+        )
+        att.db_set("checkin_selfie", file_doc.file_url, commit=True)
+    except Exception as e:
+        frappe.log_error(f"QR check-in selfie upload failed: {e}", "QR Check-in")
 # ---------------------------------------------------------------------------
 #  Mobile check-in / check-out
 # ---------------------------------------------------------------------------
@@ -87,6 +117,7 @@ def mobile_check_in(employee, mobile=None, latitude=None, longitude=None, site=N
 			frappe.throw(f"{employee} has already checked in today at {att.check_in_time}.")
 	else:
 		att = frappe.new_doc("Attendance Record")
+		att.naming_series = "ATT-.YYYY.-.#####"
 		att.employee = employee
 		att.site = site_doc.name
 		att.shift = emp.shift
@@ -124,9 +155,9 @@ def mobile_check_in(employee, mobile=None, latitude=None, longitude=None, site=N
 			file_doc = save_file(
 				fname=file_name,
 				content=raw_data,
-				doctype="Attendance Record",
-				 docname=att.name,
-				 is_private=1,
+				dt="Attendance Record",
+				dn=att.name,
+				is_private=1,
 			)
 			att.db_set("checkin_selfie", file_doc.file_url, commit=True)
 
@@ -690,7 +721,37 @@ def worker_get_overtime_requests(employee, mobile=None, limit=20):
 
 
 @frappe.whitelist(allow_guest=True)
-def qr_check_in(employee, mobile=None, qr_code_id=None):
+def check_worker_geofence(employee, mobile=None, latitude=None, longitude=None):
+    """
+    Lightweight check: is this worker currently within their assigned site's
+    geofence? Does NOT create or modify any attendance record.
+    """
+    _auth_worker(employee, mobile)
+
+    emp = frappe.get_doc("Contract Employee", employee)
+    if not emp.site:
+        frappe.throw("You are not assigned to any site. Contact your supervisor.")
+
+    site_doc = frappe.get_doc("Site", emp.site)
+
+    if latitude is None or longitude is None:
+        return {
+            "status": "Unknown",
+            "distance_m": None,
+            "message": "Location access is required. Please enable location services.",
+        }
+
+    status, distance = _geofence_status(site_doc, latitude, longitude)
+    return {
+        "status": status,
+        "distance_m": round(distance, 1) if distance is not None else None,
+        "site": site_doc.name,
+        "message": "You are within the site premises." if status == "Inside"
+                   else f"You are {round(distance) if distance else '?'}m away from {site_doc.name}. You must be at the site to check in.",
+    }
+
+@frappe.whitelist(allow_guest=True)
+def qr_check_in(employee, mobile=None, qr_code_id=None, latitude=None, longitude=None, face_image=None):
     """
     Check-in using QR code scan. Worker scans the site QR code,
     provides employee ID + mobile, and attendance is marked.
@@ -699,7 +760,7 @@ def qr_check_in(employee, mobile=None, qr_code_id=None):
          {employee: "EMP-001", mobile: "9876543210", qr_code_id: "SITE-SITEA-abc123"}
     """
     try:
-        return _qr_check_in(employee, mobile, qr_code_id)
+        return _qr_check_in(employee, mobile, qr_code_id, latitude, longitude, face_image)
     except Exception:
         frappe.log_error(
             title="QR Check-in Error",
@@ -708,7 +769,7 @@ def qr_check_in(employee, mobile=None, qr_code_id=None):
         raise
 
 
-def _qr_check_in(employee, mobile, qr_code_id):
+def _qr_check_in(employee, mobile, qr_code_id, latitude=None, longitude=None, face_image=None):
     _auth_worker(employee, mobile)
 
     if not qr_code_id:
@@ -723,9 +784,20 @@ def _qr_check_in(employee, mobile, qr_code_id):
         )
 
     site_doc = frappe.get_doc("Site", site_name)
+    
+    # Enforce geofence — reject if outside the site radius
+    geo_status, geo_distance = _geofence_status(site_doc, latitude, longitude)
+    if latitude is None or longitude is None:
+        frappe.throw("Location access is required to check in. Please enable location services and try again.")
+    if geo_status == "Outside":
+        frappe.throw(f"You are {round(geo_distance)}m away from the site. You must be at the site premises to check in.")
+
+    # Photo captured for record-keeping — no automated matching, just storage for admin review
+    face_status = "Pending" if face_image else "No Reference Photo"
+
+    emp = frappe.get_doc("Contract Employee", employee)
 
     # Verify employee is assigned to this site
-    emp = frappe.get_doc("Contract Employee", employee)
     if emp.site != site_name:
         frappe.throw(
             f"You ({employee}) are assigned to '{emp.site}', but this QR code "
@@ -751,16 +823,21 @@ def _qr_check_in(employee, mobile, qr_code_id):
             }
 
         # Has record but no check-in time (shouldn't happen, but handle it)
+        # Has record but no check-in time (shouldn't happen, but handle it)
         att.check_in_time = now_datetime()
         att.attendance_source = "QR Code Scan"
         att.site = site_name
+        att.face_verification_status = face_status
         att.save(ignore_permissions=True)
+        _save_checkin_selfie(att, face_image, attendance_date)
+        _append_geofence_log(att, latitude, longitude, geo_status)
         frappe.db.commit()
         return {
             "attendance_record": att.name,
             "check_in_time": att.check_in_time,
             "message": "Checked in successfully via QR code!",
             "site": site_name,
+            "face_verification_status": face_status,
         }
 
     # Create new attendance record
@@ -772,13 +849,17 @@ def _qr_check_in(employee, mobile, qr_code_id):
     att.date = attendance_date
     att.check_in_time = now_datetime()
     att.attendance_source = "QR Code Scan"
+    att.face_verification_status = face_status
     att.save(ignore_permissions=True)
+    _save_checkin_selfie(att, face_image, attendance_date)
+    _append_geofence_log(att, latitude, longitude, geo_status)
     frappe.db.commit()
 
     return {
         "attendance_record": att.name,
         "check_in_time": att.check_in_time,
         "site": site_name,
+        "face_verification_status": face_status,
         "message": "Checked in successfully via QR code scan!",
     }
 

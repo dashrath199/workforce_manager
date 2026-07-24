@@ -30,6 +30,12 @@ try:
 except ImportError:
     HAS_PIL = False
 
+try:
+    import cv2
+    import numpy as np
+    HAS_CV2 = True
+except ImportError:
+    HAS_CV2 = False
 # Threshold for Hamming distance (0 = identical, higher = more different)
 # Empirically: < 10 is very likely same person, 10-20 is possible, > 20 likely different
 MATCH_THRESHOLD = 15
@@ -93,6 +99,47 @@ def _load_image(image_data):
 
     return None
 
+def detect_and_crop_face(image):
+    """
+    Detect the largest face in an image using OpenCV's Haar Cascade
+    and return a tightly cropped image of just the face region.
+    Falls back to the original image if no face is detected or
+    OpenCV is unavailable.
+    """
+    if image is None or not HAS_CV2:
+        return image
+
+    try:
+        # Convert PIL image to OpenCV format (RGB -> BGR grayscale)
+        rgb_image = image.convert("RGB")
+        cv_image = np.array(rgb_image)
+        gray = cv2.cvtColor(cv_image, cv2.COLOR_RGB2GRAY)
+
+        cascade_path = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
+        face_cascade = cv2.CascadeClassifier(cascade_path)
+
+        faces = face_cascade.detectMultiScale(
+            gray, scaleFactor=1.1, minNeighbors=5, minSize=(60, 60)
+        )
+
+        if len(faces) == 0:
+            return image  # no face found — fall back to whole image
+
+        # Pick the largest detected face (in case of multiple)
+        x, y, w, h = max(faces, key=lambda f: f[2] * f[3])
+
+        # Add a small margin around the detected face
+        margin = int(0.2 * w)
+        x1 = max(0, x - margin)
+        y1 = max(0, y - margin)
+        x2 = min(cv_image.shape[1], x + w + margin)
+        y2 = min(cv_image.shape[0], y + h + margin)
+
+        cropped = rgb_image.crop((x1, y1, x2, y2))
+        return cropped
+    except Exception as e:
+        frappe.log_error(f"Face detection/crop failed, using full image: {e}", "Face Utils")
+        return image
 
 def preprocess_face(image):
     """Preprocess an image to improve face matching robustness."""
@@ -101,6 +148,8 @@ def preprocess_face(image):
     # Convert to RGB if necessary
     if image.mode != "RGB":
         image = image.convert("RGB")
+    # Detect and crop to just the face region (falls back to full image if not found)
+    image = detect_and_crop_face(image)
     # Enhance contrast
     from PIL import ImageEnhance
     enhancer = ImageEnhance.Contrast(image)

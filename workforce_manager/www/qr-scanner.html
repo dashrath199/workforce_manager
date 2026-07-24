@@ -264,15 +264,73 @@ function stopScanner() {
 function handleScan(qrCodeId) {
     // Stop the scanner
     stopScanner();
+    document.getElementById('scanned-id').textContent = '📍 Verifying your location...';
 
-    document.getElementById('scanned-id').textContent = '⏳ Checking in: ' + qrCodeId;
+    if (!navigator.geolocation) {
+        document.getElementById('scanned-id').textContent = '';
+        var card = document.getElementById('result-card');
+        document.getElementById('result-icon').textContent = '❌';
+        document.getElementById('result-title').textContent = 'Check-in Failed';
+        document.getElementById('result-message').textContent = 'Geolocation is not supported by this browser.';
+        card.classList.add('show');
+        return;
+    }
 
+    navigator.geolocation.getCurrentPosition(function(pos) {
+        captureFaceAndSubmit(qrCodeId, pos.coords.latitude, pos.coords.longitude);
+    }, function(err) {
+        document.getElementById('scanned-id').textContent = '';
+        var card = document.getElementById('result-card');
+        document.getElementById('result-icon').textContent = '❌';
+        document.getElementById('result-title').textContent = 'Location Required';
+        document.getElementById('result-message').textContent = 'Could not get your location: ' + err.message + '. Please enable location services and try again.';
+        card.classList.add('show');
+    }, { enableHighAccuracy: true, timeout: 10000 });
+}
+
+function captureFaceAndSubmit(qrCodeId, latitude, longitude) {
+    document.getElementById('scanned-id').textContent = '🤳 Look at the camera for verification...';
+
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: 480, height: 480 } })
+    .then(function(stream) {
+        var video = document.getElementById('video');
+        video.srcObject = stream;
+        video.onloadedmetadata = function() {
+            video.play();
+            // Give the camera a moment to auto-focus/adjust exposure
+            setTimeout(function() {
+                var canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                var ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                var faceImage = canvas.toDataURL('image/jpeg', 0.8);
+
+                stream.getTracks().forEach(function(t) { t.stop(); });
+                submitCheckIn(qrCodeId, latitude, longitude, faceImage);
+            }, 1000);
+        };
+    })
+    .catch(function(err) {
+        document.getElementById('scanned-id').textContent = '';
+        var card = document.getElementById('result-card');
+        document.getElementById('result-icon').textContent = '❌';
+        document.getElementById('result-title').textContent = 'Camera Required';
+        document.getElementById('result-message').textContent = 'Could not access front camera for face verification: ' + err.message;
+        card.classList.add('show');
+    });
+}
+
+function submitCheckIn(qrCodeId, latitude, longitude, faceImage) {
+    document.getElementById('scanned-id').textContent = '⏳ Veryfying and Checking in: ' + qrCodeId;
     // Call the check-in API
     var params = new URLSearchParams();
     params.append('employee', employee);
     params.append('mobile', mobile);
     params.append('qr_code_id', qrCodeId);
-
+    params.append('latitude', latitude);
+    params.append('longitude', longitude);
+    if (faceImage) { params.append('face_image', faceImage); }
     fetch('/api/method/workforce_manager.contract_labour_management.api.qr_check_in', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },

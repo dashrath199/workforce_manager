@@ -551,10 +551,46 @@ async function submitEwaRequest() {
 // ---------------------------------------------------------------------------
 
 function openQrScanner() {
-    // Store credentials in sessionStorage so the scanner page can access them
-    sessionStorage.setItem('qr_employee', employee);
-    sessionStorage.setItem('qr_mobile', mobile);
-    window.location.href = '/qr-scanner';
+    toast('Checking your location...');
+    if (!navigator.geolocation) {
+        toast('Geolocation is not supported by this browser.', true);
+        return;
+    }
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+
+        const params = new URLSearchParams();
+        params.append('employee', employee);
+        params.append('mobile', mobile);
+        params.append('latitude', lat);
+        params.append('longitude', lng);
+
+        try {
+            const r = await fetch('/api/method/workforce_manager.contract_labour_management.api.check_worker_geofence', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: params,
+            });
+            const data = await r.json();
+            if (data.exception) { toast('Error: ' + data.exception, true); return; }
+
+            const res = data.message;
+            if (res.status !== 'Inside') {
+                toast(res.message, true);
+                return;
+            }
+
+            // Inside geofence — proceed to scanner
+            sessionStorage.setItem('qr_employee', employee);
+            sessionStorage.setItem('qr_mobile', mobile);
+            window.location.href = '/qr-scanner';
+        } catch (e) {
+            toast('Error: ' + e.message, true);
+        }
+    }, (err) => {
+        toast('Location error: ' + err.message, true);
+    }, { enableHighAccuracy: true, timeout: 10000 });
 }
 
 async function loadQrCheckins() {
